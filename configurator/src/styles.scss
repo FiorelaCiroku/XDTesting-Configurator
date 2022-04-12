@@ -44,3 +44,10 @@
     width: 65vw;
   }
 }
+
+.p-datatable {
+  @include media-breakpoint-up('sm') {
+    // 100vw - (sidebar width + container padding)
+    max-width: calc(100vw - 324px);
+  }
+}

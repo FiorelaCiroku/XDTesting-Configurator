@@ -1,48 +1,23 @@
-import { Component, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component} from '@angular/core';
 import { ApiService } from '../../services';
-import {
-  catchError,
-  combineLatest,
-  concat,
-  filter,
-  lastValueFrom,
-  Observable,
-  of,
-  Subscription,
-  switchMap, tap,
-  throwError,
-  toArray
-} from 'rxjs';
-import {
-  ApiResult,
-  ContentFile,
-  DataSpec,
-  EditTestParams,
-  Fragment,
-  TestDetail,
-  TestDetailForm,
-  TestType
-} from '../../models';
+import { ApiResult, ContentFile, CreateTestParams, DataSpec, TestDetail, TestDetailForm, TestType } from '../../models';
 import { TypedFormArray, TypedFormControl, TypedFormGroup } from '../../utils/typed-form';
 import { TEST_TYPE_DEFINITIONS } from '../../constants';
+import { catchError, concat, lastValueFrom, Observable, of, switchMap, tap, throwError, toArray } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { SelectFileComponent } from '../select-file/select-file.component';
 
-
 @Component({
-  selector: 'config-edit-test',
-  templateUrl: './edit-test.component.html',
-  styleUrls: ['./edit-test.component.scss'],
-  providers: [DialogService]
+  selector: 'config-create-test',
+  templateUrl: './create-test.component.html',
+  styleUrls: ['./create-test.component.scss']
 })
-export class EditTestComponent implements OnDestroy {
+export class CreateTestComponent {
 
-  fragmentName?: string;
   test?: TestDetail;
   initErrorMsg?: string;
   formGroup?: TypedFormGroup<TestDetailForm>;
-  ids?: string[];
   saved?: boolean;
   savedTest?: TestDetail;
   showAlert = false;
@@ -55,24 +30,22 @@ export class EditTestComponent implements OnDestroy {
   useUploadedQuery = false;
   dataRows?: TypedFormGroup<DataSpec>[];
 
-  private _fragmentsSub?: Subscription;
-
-
   constructor(private _route: ActivatedRoute, private _apiService: ApiService, private _dialogService: DialogService) {
     this._init();
   }
 
-  ngOnDestroy(): void {
-    this._fragmentsSub?.unsubscribe();
-  }
-
   onTypeSelect(): void {
     if (this.formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION') {
+      this.formGroup?.controls.expectedResultsFile?.enable();
+      this.formGroup?.controls.expectedResultsFileName?.enable();
       return;
     }
 
     this.formGroup?.controls.expectedResultsFile?.reset();
+    this.formGroup?.controls.expectedResultsFile?.disable();
+
     this.formGroup?.controls.expectedResultsFileName?.reset();
+    this.formGroup?.controls.expectedResultsFileName?.disable();
 
 
     // noinspection UnnecessaryLocalVariableJS
@@ -176,9 +149,6 @@ export class EditTestComponent implements OnDestroy {
 
   selectQueryFile(): void {
     const ref = this._dialogService.open(SelectFileComponent, {
-      data: {
-        fragmentName: this.fragmentName
-      },
       header: 'Select uploaded query file',
       modal: true
     });
@@ -190,10 +160,7 @@ export class EditTestComponent implements OnDestroy {
   }
 
   selectDataFile(): void {
-    const ref = this._dialogService.open(SelectFileComponent, {
-      data: {
-        fragmentName: this.fragmentName
-      },
+    const ref = this._dialogService.open(SelectFileComponent,{
       header: 'Select uploaded data file',
       modal: true
     });
@@ -206,9 +173,6 @@ export class EditTestComponent implements OnDestroy {
 
   selectExpectedResultsFile(): void {
     const ref = this._dialogService.open(SelectFileComponent, {
-      data: {
-        fragmentName: this.fragmentName
-      },
       header: 'Select uploaded expected results file',
       modal: true
     });
@@ -220,7 +184,7 @@ export class EditTestComponent implements OnDestroy {
   }
 
   save(): void {
-    if (!this.formGroup || !this.fragmentName) {
+    if (!this.formGroup) {
       return;
     }
 
@@ -253,10 +217,10 @@ export class EditTestComponent implements OnDestroy {
 
 
     if (formValue?.queryFile || formValue?.queryFileName) {
-      updateValue.queryFileName = this.fragmentName + '/' + (formValue?.queryFile?.[0]?.name || formValue?.queryFileName);
+      updateValue.queryFileName = (formValue?.queryFile?.[0]?.name || formValue?.queryFileName);
 
       if (formValue?.queryFile?.length) {
-        $queryFileUpload = this._apiService.uploadFile(this.fragmentName, formValue.queryFile[0]);
+        $queryFileUpload = this._apiService.uploadFile(formValue.queryFile[0]);
       }
 
     } else if (formValue?.query) {
@@ -265,19 +229,19 @@ export class EditTestComponent implements OnDestroy {
 
 
     if (formValue?.expectedResultsFile?.length || formValue?.expectedResultsFileName) {
-      updateValue.expectedResultsFileName = this.fragmentName + '/' + (formValue?.expectedResultsFile?.[0]?.name || formValue?.expectedResultsFileName);
+      updateValue.expectedResultsFileName = (formValue?.expectedResultsFile?.[0]?.name || formValue?.expectedResultsFileName);
 
       if (formValue?.expectedResultsFile?.length) {
-        $expectedResultsFileUpload = this._apiService.uploadFile(this.fragmentName, formValue?.expectedResultsFile[0]);
+        $expectedResultsFileUpload = this._apiService.uploadFile(formValue?.expectedResultsFile[0]);
       }
     }
 
 
     if (formValue?.dataFile?.length || formValue?.dataFileName) {
-      updateValue.dataFileName = this.fragmentName + '/' + (formValue?.dataFile?.[0]?.name || formValue?.dataFileName);
+      updateValue.dataFileName = (formValue?.dataFile?.[0]?.name || formValue?.dataFileName);
 
       if (formValue?.dataFile?.length) {
-        $dataFileUpload = this._apiService.uploadFile(this.fragmentName, formValue.dataFile[0]);
+        $dataFileUpload = this._apiService.uploadFile(formValue.dataFile[0]);
       }
     } else if (formValue?.data?.rows && formValue.data.rows.length > 0) {
       updateValue.data = (formValue.data.prefixes + '\n\n') || '';
@@ -300,33 +264,33 @@ export class EditTestComponent implements OnDestroy {
         $queryFileUpload
           .pipe(tap((res) => {
             if (res.data) {
-              updateValue.queryFileName = this.fragmentName + '/' + res.data;
+              updateValue.queryFileName = res.data;
             }
           })),
         $dataFileUpload
           .pipe(tap((res) => {
             if (res.data) {
-              updateValue.dataFileName = this.fragmentName + '/' + res.data;
+              updateValue.dataFileName = res.data;
             }
           })),
         $expectedResultsFileUpload
           .pipe(tap((res) => {
             if (res.data) {
-              updateValue.expectedResultsFileName = this.fragmentName + '/' + res.data;
+              updateValue.expectedResultsFileName = res.data;
             }
           }))
       )
         .pipe(toArray())
         .pipe(switchMap((results: ApiResult<string>[]) => {
-          const success = results.reduce((prev, current) => prev && current.success, true);
+            const success = results.reduce((prev, current) => prev && current.success, true);
 
-          if (!success) {
-            return throwError(() => results.map(r => r.message).filter(m => !!m).join('\n'));
-          }
+            if (!success) {
+              return throwError(() => results.map(r => r.message).filter(m => !!m).join('\n'));
+            }
 
-          return this._apiService.updateFragmentTest(this.fragmentName || '', updateValue, this.test?.id);
-        })
-      )
+            return this._apiService.updateTest(updateValue, this.test?.id);
+          })
+        )
     )
       .finally(() => {
         this._toggleDisableInputs(false);
@@ -343,6 +307,7 @@ export class EditTestComponent implements OnDestroy {
       });
 
   }
+
 
   private _toggleDisableInputs(disable: boolean): void {
     const controls = this.formGroup?.controls;
@@ -386,35 +351,24 @@ export class EditTestComponent implements OnDestroy {
     }
   }
 
-
   private _init(): void {
-    this._fragmentsSub = this._route.params
-      .pipe(filter((p: EditTestParams) => p.fragmentName))
-      .pipe(switchMap((p: EditTestParams) => {
+    const $sub = this._route.params
+      .pipe(switchMap((p: CreateTestParams) => {
         this._apiService.$loading.next(true);
 
-        return combineLatest([
-          of(p),
-          this._apiService.getFragment(p.fragmentName),
-        ]);
+        if (p.testId) {
+          return this._apiService.getTest(p.testId);
+        }
+
+        return of(undefined);
       }))
       .pipe(catchError(err => {
         this.initErrorMsg = err;
-        return of([undefined, undefined]);
+        return of(undefined);
       }))
-      .subscribe(([params, result]: [EditTestParams, Fragment] | undefined[]) => {
-        this.fragmentName = params?.fragmentName;
-
-        if (params && result && params.testId) {
-          const filteredTest = result.tests?.filter(t => t.id === params.testId);
-          this.ids = result.tests?.map(t => t.id);
-
-          if (!filteredTest || filteredTest.length === 0) {
-            this.initErrorMsg = 'No test found with the specified id';
-
-          } else {
-            this.test = filteredTest[0];
-          }
+      .subscribe(result => {
+        if (result) {
+          this.test = result;
         }
 
         if (!this.initErrorMsg) {
@@ -422,6 +376,7 @@ export class EditTestComponent implements OnDestroy {
         }
 
         this._apiService.$loading.next(false);
+        $sub.unsubscribe();
       });
   }
 
@@ -468,4 +423,5 @@ export class EditTestComponent implements OnDestroy {
     const dataArr = dataFg.controls?.rows as TypedFormArray<DataSpec>;
     this.dataRows = dataArr.controls as TypedFormGroup<DataSpec>[];
   }
+
 }

@@ -1,3 +1,5 @@
+export type TestingType = 'XD_TESTING' | 'STANDARD';
+
 export interface TestDetail {
   id: string;
   type: TestType;

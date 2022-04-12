@@ -1,12 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import {
+  ActionsComponent,
   CreateFragmentComponent,
   FragmentDetailComponent,
-  EditTestComponent,
-  FragmentListComponent, LoginComponent, LayoutComponent
+  EditFragmentTestComponent,
+  FragmentListComponent, LoginComponent, LayoutComponent, TestListComponent, CreateTestComponent
 } from './components';
-import { AuthenticationService } from './services';
+import { AuthenticationService, TestingTypeGuardService } from './services';
 
 const routes: Routes = [
   {
@@ -20,36 +21,65 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'auth',
+    component: LoginComponent,
+    pathMatch: 'full'
+  },
+  {
     path: '',
     component: LayoutComponent,
     canActivate: [AuthenticationService],
     children: [
       {
+        path: 'actions',
+        component: ActionsComponent
+      },
+      {
         path: 'fragments',
-        component: FragmentListComponent,
+        canActivate: [TestingTypeGuardService],
+        children: [
+          {
+            path: '',
+            component: FragmentListComponent,
+          },
+          {
+            path: 'create',
+            component: CreateFragmentComponent,
+            pathMatch: 'full'
+          },
+          {
+            path: ':fragmentName',
+            component: FragmentDetailComponent
+          },
+          {
+            path: ':fragmentName/create-test',
+            component: EditFragmentTestComponent
+          },
+          {
+            path: ':fragmentName/edit-test/:testId',
+            component: EditFragmentTestComponent
+          },
+        ],
       },
       {
-        path: 'fragments/create',
-        component: CreateFragmentComponent,
-        pathMatch: 'full'
-      },
-      {
-        path: 'fragments/:fragmentName',
-        component: FragmentDetailComponent
-      },
-      {
-        path: 'fragments/:fragmentName/create-test',
-        component: EditTestComponent
-      },
-      {
-        path: 'fragments/:fragmentName/edit-test/:testId',
-        component: EditTestComponent
-      },
+        path: 'tests',
+        canActivate: [TestingTypeGuardService],
+        children: [
+          {
+            path: '',
+            component: TestListComponent
+          },
+          {
+            path: 'create',
+            component: CreateTestComponent
+          },
+          {
+            path: 'edit/:testId',
+            component: CreateTestComponent
+          }
+        ]
+      }
     ]
-  },
-  {
-    path: '**',
-    redirectTo: '/fragments'
   }
 ];
 

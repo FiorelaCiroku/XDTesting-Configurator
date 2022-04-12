@@ -27,6 +27,4 @@ export class AuthenticationService implements CanActivate {
         return of(true);
       }));
   }
-
-  // constructor() { }
 }

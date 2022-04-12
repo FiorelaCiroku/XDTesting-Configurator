@@ -1,8 +1,8 @@
 <div class="alert alert-{{type}} d-flex" *ngIf="isOpen">
-  <div style="flex: 1 0">
+  <div class="flex-grow-1">
     <ng-content></ng-content>
   </div>
-  <div *ngIf="dismissable" class="px-3" style="flex: 0 0; cursor: pointer;" (click)="close()">
+  <div *ngIf="dismissable" class="px-3" role="button" (click)="close()">
     <i class="fa-solid fa-times"></i>
   </div>
 </div>

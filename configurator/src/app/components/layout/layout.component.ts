@@ -1,67 +1,48 @@
 import { Component} from '@angular/core';
 import { ApiService } from '../../services';
-import { Observable, of} from 'rxjs';
-import { Repository, ShortBranch } from '../../models';
-import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY } from '../../constants';
+import { TestingType } from '../../models';
+import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY, SELECTED_TESTING_TYPE_KEY } from '../../constants';
+import { DialogService } from 'primeng/dynamicdialog';
+import { SelectRepoComponent } from '../select-repo/select-repo.component';
 
 @Component({
   selector: 'config-layout',
   templateUrl: './layout.component.html',
-  styleUrls: ['./layout.component.scss']
+  styleUrls: ['./layout.component.scss'],
+  providers: [DialogService]
 })
 export class LayoutComponent {
 
-  $repos: Observable<Repository[]>;
   selectedRepo?: string | null;
-  $branches?: Observable<ShortBranch[]>;
   selectedBranch?: string | null;
-  displayModal = false;
-  error?: string;
+  selectedTestingType?: TestingType;
   displaySidebar = false;
 
-  constructor(readonly apiService: ApiService) {
-    this.$repos = this.apiService.listRepos();
-
+  constructor(readonly apiService: ApiService, public dialogService: DialogService) {
     this.selectedRepo = localStorage.getItem(SELECTED_REPO_KEY);
     this.selectedBranch = localStorage.getItem(SELECTED_BRANCH_KEY);
+    this.selectedTestingType = localStorage.getItem(SELECTED_TESTING_TYPE_KEY) as TestingType | undefined;
 
-    if (!this.selectedRepo || !this.selectedBranch) {
-      this.displayModal = true;
-    }
-
-    if (this.selectedRepo) {
-      this.updateBranches();
+    if (!this.selectedRepo || !this.selectedBranch || !this.selectedTestingType) {
+      this.openModal();
     }
   }
 
-
-  saveRepository(): void {
-    this.error = undefined;
-
-    if (!this.selectedRepo || !this.selectedBranch) {
-      this.error = 'No repository or branch selected';
-      return;
-    }
-
+  openModal(): void {
     const previousRepo = localStorage.getItem(SELECTED_REPO_KEY);
     const previousBranch = localStorage.getItem(SELECTED_BRANCH_KEY);
 
-    localStorage.setItem(SELECTED_REPO_KEY, this.selectedRepo);
-    localStorage.setItem(SELECTED_BRANCH_KEY, this.selectedBranch);
+    const ref = this.dialogService.open(SelectRepoComponent, { header: 'Repository' });
 
-    this.displayModal = false;
+    const $sub = ref.onClose.subscribe(() => {
+      const currentRepo = localStorage.getItem(SELECTED_REPO_KEY);
+      const currentBranch = localStorage.getItem(SELECTED_REPO_KEY);
 
-    if (previousRepo !== this.selectedRepo || previousBranch !== this.selectedBranch) {
-      window.location.reload();
-    }
-  }
+      if (currentBranch !== previousBranch || currentRepo !== previousRepo) {
+        window.location.reload();
+      }
 
-  updateBranches(): void {
-    if (!this.selectedRepo) {
-      this.$branches = of([]);
-      return;
-    }
-
-    this.$branches = this.apiService.listBranches(this.selectedRepo);
+      $sub.unsubscribe();
+    });
   }
 }

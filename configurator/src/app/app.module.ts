@@ -5,6 +5,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AccordionModule } from 'primeng/accordion';
+import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
+import { DynamicDialogModule } from 'primeng/dynamicdialog';
+import { InputSwitchModule } from 'primeng/inputswitch';
 import { TableModule } from 'primeng/table';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -13,20 +17,19 @@ import {
   CreateFragmentComponent,
   FragmentDetailComponent,
   FragmentListComponent,
-  EditTestComponent,
+  EditFragmentTestComponent,
   LoginComponent,
-  LayoutComponent
+  LayoutComponent,
+  SpinnerComponent,
+  SelectFileComponent,
+  AlertComponent,
+  ActionsComponent,
+  SelectRepoComponent,
+  TestListComponent, CreateTestComponent
 } from './components';
-import { ValidationFeedbackDirective } from './directives';
+import { ValidationFeedbackDirective, FileInputDirective } from './directives';
 import { HttpInterceptorService } from './services';
-import { DialogModule } from 'primeng/dialog';
-import { InputSwitchModule } from 'primeng/inputswitch';
-import { FileInputDirective } from './directives/file-input.directive';
-import { SpinnerComponent } from './components/spinner/spinner.component';
-import { CheckboxModule } from 'primeng/checkbox';
-import { SelectFileComponent } from './components/select-file/select-file.component';
-import { AlertComponent } from './components/alert/alert.component';
-import { DynamicDialogModule } from 'primeng/dynamicdialog';
+
 
 
 @NgModule({
@@ -35,14 +38,18 @@ import { DynamicDialogModule } from 'primeng/dynamicdialog';
     CreateFragmentComponent,
     FragmentDetailComponent,
     FragmentListComponent,
-    EditTestComponent,
+    EditFragmentTestComponent,
     ValidationFeedbackDirective,
     LoginComponent,
     LayoutComponent,
     FileInputDirective,
     SpinnerComponent,
     SelectFileComponent,
-    AlertComponent
+    AlertComponent,
+    ActionsComponent,
+    SelectRepoComponent,
+    TestListComponent,
+    CreateTestComponent
   ],
   imports: [
     BrowserModule,

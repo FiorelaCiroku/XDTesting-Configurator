@@ -6,14 +6,15 @@ import {
   CreateOrUpdateFileResponse,
   Fragment,
   Repository, ShortBranch,
-  TestDetail
+  TestDetail, TestingType, WorkflowRunResponse, UserInput
 } from '../models';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, catchError, EMPTY, from, map, Observable, of, switchMap, tap, throwError, zip } from 'rxjs';
 import { baseUrl } from '../../environments/environment';
-import { SELECTED_REPO_KEY, TEST_TYPE_DEFINITIONS } from '../constants';
+import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY, TEST_TYPE_DEFINITIONS } from '../constants';
 import { Router } from '@angular/router';
 import * as moment from 'moment';
+
 
 @Injectable({
   providedIn: 'root'
@@ -25,12 +26,15 @@ export class ApiService {
   private repositories?: Repository[];
   private repositoriesEtag?: string;
 
-  private fragments?: Fragment[];
-  private fragmentsEtag?: string;
-  private fragmentsSha?: string;
+  private userInput?: UserInput;
+  private userInputEtag?: string;
+  private userInputSha?: string;
 
   private branchesEtag?: string;
   private branches?: ShortBranch[];
+
+  private workflowRunsEtag?: string;
+  private workflowRuns?: WorkflowRunResponse;
 
   private baseDir = '.xd-testing';
   private userInputPath = `${this.baseDir}/UserInput.json`;
@@ -46,6 +50,20 @@ export class ApiService {
     }
 
     return {};
+  }
+
+  private static getUrl(relativeUrl: string, repo?: string | null, branch?: string | null): string | null {
+    repo = repo || localStorage.getItem(SELECTED_REPO_KEY);
+    branch = branch || localStorage.getItem(SELECTED_BRANCH_KEY);
+
+    if (!repo || ! branch) {
+      return null;
+    }
+
+    relativeUrl = baseUrl + relativeUrl.replace(/(?:\{user}\/)?\{repo}/, repo);
+    relativeUrl += `?branch=${branch}`;
+
+    return relativeUrl;
   }
 
 
@@ -77,14 +95,14 @@ export class ApiService {
       }));
   }
 
-  listFiles(fragmentName: string): Observable<ContentFile[]> {
-    const repo = localStorage.getItem(SELECTED_REPO_KEY);
+  listFiles(fragmentName?: string): Observable<ContentFile[]> {
+    const url = ApiService.getUrl('/repos/{repo}/contents/.xd-testing' + (fragmentName ? `/${fragmentName}` : ''));
 
-    if (!repo) {
+    if (!url) {
       return EMPTY;
     }
 
-    return this._http.get<ContentFile[]>(`${baseUrl}/repos/${repo}/contents/.xd-testing/${fragmentName}`)
+    return this._http.get<ContentFile[]>(url)
       .pipe(catchError((err: HttpErrorResponse) => {
         if (err.status === 404) {
           return of([]);
@@ -94,40 +112,75 @@ export class ApiService {
       }));
   }
 
-  getFragments(): Observable<Fragment[]> {
-    const headers = ApiService.getDefaultHeaders(this.fragmentsEtag);
-    const repo = localStorage.getItem(SELECTED_REPO_KEY);
+  listWorkflows(): Observable<WorkflowRunResponse> {
+    const url = ApiService.getUrl('/repos/{repo}/actions/runs');
 
-    if (!repo) {
+    if (!url) {
       return EMPTY;
     }
 
-    return this._http.get<ContentFile>(
-      `${baseUrl}/repos/${repo}/contents/${this.userInputPath}`,
-      {observe: 'response', headers}
-    )
+    const defaultResponse: WorkflowRunResponse = {total_count: 0, workflow_runs: []};
+    const headers = ApiService.getDefaultHeaders(this.workflowRunsEtag);
+
+    return this._http.get<WorkflowRunResponse>(url, { observe: 'response', headers })
+      .pipe(map((res) => {
+        this.workflowRunsEtag = res.headers.get('etag')?.replace('W/', '') || '';
+        this.workflowRuns = res.body || defaultResponse;
+        return this.workflowRuns;
+      }))
+      .pipe(catchError(() => of(this.workflowRuns || defaultResponse)));
+  }
+
+  getTestingType(repository: string, branch: string): Observable<TestingType | undefined> {
+    const headers = ApiService.getDefaultHeaders(this.userInputEtag);
+    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`, repository, branch);
+
+    if (!url) {
+      return EMPTY;
+    }
+
+    return this._http.get<ContentFile>(url,{ observe: 'response', headers})
       .pipe(map(res => {
-        this.fragmentsEtag = res.headers.get('etag')?.replace('W/', '') || '';
-        const body = res.body;
+        this.userInput = this._parseUserInput(res);
+        return this.userInput.type;
+      }))
+      .pipe(catchError(() => of(this.userInput?.type)));
 
-        if (res.status === 304 || !body) {
-          console.log(this.fragments);
-          return this.fragments || [];
-        }
+  }
 
-        this.fragmentsSha = body.sha;
-        const fileContent = atob(body.content);
+  getFragments(): Observable<Fragment[]> {
+    const headers = ApiService.getDefaultHeaders(this.userInputEtag);
+    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
 
-        if (!fileContent) {
-          this.fragments = [];
-        } else {
-          this.fragments = JSON.parse(fileContent) as Fragment[];
-        }
+    if (!url) {
+      return EMPTY;
+    }
 
-        return this.fragments;
+    return this._http.get<ContentFile>(url, {observe: 'response', headers})
+      .pipe(map(res => {
+        this.userInput = this._parseUserInput(res);
+        return this.userInput.fragments || [];
       }))
       .pipe(catchError(() => {
-        return of(this.fragments || []);
+        return of(this.userInput?.fragments || []);
+      }));
+  }
+
+  getTests(): Observable<TestDetail[]> {
+    const headers = ApiService.getDefaultHeaders(this.userInputEtag);
+    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
+
+    if (!url) {
+      return EMPTY;
+    }
+
+    return this._http.get<ContentFile>(url, {observe: 'response', headers})
+      .pipe(map(res => {
+        this.userInput = this._parseUserInput(res);
+        return this.userInput.tests || [];
+      }))
+      .pipe(catchError(() => {
+        return of(this.userInput?.tests || []);
       }));
   }
 
@@ -144,6 +197,19 @@ export class ApiService {
       }));
   }
 
+  getTest(id: string): Observable<TestDetail> {
+    return this.getTests()
+      .pipe(map(tests => {
+        const filteredTests = tests.filter(f => f.id === id);
+
+        if (filteredTests.length === 0) {
+          throw `No tests found with id ${id}`;
+        } else {
+          return filteredTests[0];
+        }
+      }));
+  }
+
   createFragment(fragment: Fragment): Observable<ApiResult> {
     return this.getFragments()
       .pipe(switchMap(fragments => {
@@ -154,11 +220,36 @@ export class ApiService {
 
         fragments.push(fragment);
 
-        return this._updateFragments(fragments, `Created fragment ${fragment.name}`, this.fragmentsSha);
+        return this._updateFragments(fragments, `Created fragment ${fragment.name}`, this.userInputSha);
       }))
       .pipe(map(() => ({success: true})))
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.error});
+      }));
+  }
+
+  updateTestingType(repo: string, branch: string, testingType: TestingType): Observable<ApiResult> {
+    return this.getTestingType(repo, branch)
+      .pipe(switchMap((type): Observable<ApiResult> => {
+        if (type === testingType) {
+          return of({success: true});
+        }
+
+        const content: UserInput = {
+          ...(this.userInput || {}),
+          type: testingType
+        };
+
+        return this._updateUserInput(
+          JSON.stringify(content, null, 4),
+          'Updated testing type',
+          this.userInputSha
+        )
+          .pipe(map(() => ({success: true}) ));
+
+      }))
+      .pipe(catchError((err) => {
+        return of({success: false, err: err.message});
       }));
   }
 
@@ -224,7 +315,7 @@ export class ApiService {
           fragment.tests.splice(index, 1, newTest);
         }
 
-        return this._updateFragments(fragments, `Updated fragment ${fragmentName}`,  this.fragmentsSha)
+        return this._updateFragments(fragments, `Updated fragment ${fragmentName}`,  this.userInputSha)
           .pipe(map(() => newTest));
       }))
 
@@ -234,17 +325,69 @@ export class ApiService {
       }));
   }
 
-  uploadFile(fragment: string, dataFile: File): Observable<ApiResult<string>> {
+  updateTest(testDetail: Omit<TestDetail, 'id'>, testId?: string): Observable<ApiResult<TestDetail>> {
+    return this.getTests()
+      .pipe(switchMap(tests => {
+        let newTest: TestDetail;
+        let message: string;
+
+        if (!testId) {
+          const prefix = TEST_TYPE_DEFINITIONS[testDetail.type].idPrefix;
+          const re = new RegExp(`^${prefix}`);
+          let lastId = 0;
+
+          for (const test of tests) {
+            if (!test.id.startsWith(prefix)) {
+              continue;
+            }
+
+            const temp = parseInt(test.id.replace(re, ''), 10);
+            if (test.type === testDetail.type && temp > lastId) {
+              lastId = temp;
+            }
+          }
+
+          const newId = prefix + (lastId + 1).toString().padStart(3, '0');
+          newTest = {...testDetail, id: newId};
+          tests.push(newTest);
+          message = `Added test ${newId}`;
+        }
+        else {
+          let index: number | undefined;
+
+          for (let i = 0; i < tests.length; i++) {
+            const test = tests[i];
+            if (test.type === testDetail.type && test.id === testId) {
+              index = i;
+              break;
+            }
+          }
+
+          if (index === undefined) {
+            return throwError(() => 'Test id not found');
+          }
+
+          const oldTest = tests[index];
+          newTest = {...testDetail, id: oldTest.id};
+          tests.splice(index, 1, newTest);
+          message = `Updated tests ${oldTest.id}`;
+        }
+
+        return this._updateTests(tests, message,  this.userInputSha)
+          .pipe(map(() => newTest));
+      }))
+
+      .pipe(map((data): ApiResult<TestDetail> => ({success: true, data}) ))
+      .pipe(catchError((err: HttpErrorResponse) => {
+        return of({success: false, message: err.error});
+      }));
+  }
+
+  uploadFile(dataFile: File, fragment?: string): Observable<ApiResult<string>> {
     let name = dataFile.name;
 
     return zip(from(dataFile.text()), this.listFiles(fragment))
       .pipe(switchMap(([fileContent, fileList]) => {
-        const repo = localStorage.getItem(SELECTED_REPO_KEY);
-
-        if (!repo) {
-          return EMPTY;
-        }
-
         const isPresent = fileList.filter(f => f.name === name).length > 0;
 
 
@@ -260,11 +403,16 @@ export class ApiService {
         }
 
         const body: CreateOrUpdateFile = {
-          message: `Uploaded file ${name} for fragment ${fragment}`,
+          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment}` : ''),
           content: btoa(fileContent),
         };
 
-        return this._http.put(`${baseUrl}/repos/${repo}/contents/${this.baseDir}/${fragment}/${name}`, body);
+        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}` + (fragment ? `/${fragment}` : '') + `/${name}`);
+        if (!url) {
+          return EMPTY;
+        }
+
+        return this._http.put(url, body);
       }))
       .pipe(map(() => ({success: true, data: name}) ))
       .pipe(catchError((err: HttpErrorResponse) => {
@@ -276,7 +424,7 @@ export class ApiService {
     return this.getFragments()
       .pipe(switchMap(fragments => {
         fragments = fragments.filter(f => f.name !== fragmentName);
-        return this._updateFragments(fragments, `Removed fragment ${fragmentName}`, this.fragmentsSha);
+        return this._updateFragments(fragments, `Removed fragment ${fragmentName}`, this.userInputSha);
       }))
 
       .pipe(map(() => ({success: true})))
@@ -285,7 +433,7 @@ export class ApiService {
       }));
   }
 
-  deleteTest(fragmentName: string, testId: string): Observable<ApiResult> {
+  deleteTestFromFragment(fragmentName: string, testId: string): Observable<ApiResult> {
     return this.getFragments()
       .pipe(switchMap((fragments) => {
         const fragment = fragments.find(f => f.name === fragmentName);
@@ -296,7 +444,23 @@ export class ApiService {
 
         fragment.tests = fragment.tests?.filter(t => t.id !== testId);
 
-        return this._updateFragments(fragments, `Removed test ${testId} from fragment ${fragmentName}`, this.fragmentsSha);
+        return this._updateFragments(fragments, `Removed test ${testId} from fragment ${fragmentName}`, this.userInputSha);
+      }))
+      .pipe(map(() => ({success: true})))
+      .pipe(catchError((err: HttpErrorResponse): Observable<ApiResult> => {
+        return of({
+          success: false,
+          message: err.message
+        });
+      }));
+  }
+
+  deleteTest(testId: string): Observable<ApiResult> {
+    return this.getTests()
+      .pipe(switchMap((tests) => {
+        tests = tests.filter(t => t.id !== testId);
+
+        return this._updateTests(tests, `Removed test ${testId}`, this.userInputSha);
       }))
       .pipe(map(() => ({success: true})))
       .pipe(catchError((err: HttpErrorResponse): Observable<ApiResult> => {
@@ -308,7 +472,14 @@ export class ApiService {
   }
 
 
+
   private _updateUserInput(content: string, message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
+    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
+
+    if (!url) {
+      return EMPTY;
+    }
+
     const body: CreateOrUpdateFile = {
       message,
       content: btoa(content),
@@ -318,21 +489,54 @@ export class ApiService {
       body.sha = sha;
     }
 
-    const repo = localStorage.getItem(SELECTED_REPO_KEY);
-
-    if (!repo) {
-      return EMPTY;
-    }
-
-    return this._http.put<CreateOrUpdateFileResponse>(`${baseUrl}/repos/${repo}/contents/${this.userInputPath}`, body);
+    return this._http.put<CreateOrUpdateFileResponse>(url, body);
   }
 
   private _updateFragments(fragments: Fragment[], message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
-    return this._updateUserInput(JSON.stringify(fragments, null, 2), message, sha)
+    const content = {
+      ...this.userInput || { type: 'XD_TESTING' },
+      fragments
+    };
+
+    return this._updateUserInput(JSON.stringify(content, null, 2), message, sha)
       .pipe(tap((res) => {
-        this.fragmentsSha = res.content?.sha;
-        this.fragmentsEtag = `"${res.content?.sha}"`;
-        this.fragments = fragments;
+        this.userInputSha = res.content?.sha;
+        this.userInputEtag = `"${res.content?.sha}"`;
+        this.userInput = content;
       }));
+  }
+
+  private _updateTests(tests: TestDetail[], message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
+    const content = {
+      ...this.userInput || { type: 'STANDARD' },
+      tests
+    };
+
+    return this._updateUserInput(JSON.stringify(content, null, 2), message, sha)
+      .pipe(tap((res) => {
+        this.userInputSha = res.content?.sha;
+        this.userInputEtag = `"${res.content?.sha}"`;
+        this.userInput = content;
+      }));
+  }
+
+  private _parseUserInput(res: HttpResponse<ContentFile>): UserInput {
+    this.userInputEtag = res.headers.get('etag')?.replace('W/', '') || '';
+
+    const body = res.body;
+    const defaultUserInput: UserInput = {type: 'XD_TESTING', fragments: [], tests: []};
+
+    if (!body) {
+      return defaultUserInput;
+    }
+
+    this.userInputSha = body.sha;
+    const fileContent = atob(body.content);
+
+    if (!fileContent) {
+      return defaultUserInput;
+    }
+
+    return JSON.parse(fileContent) as UserInput;
   }
 }

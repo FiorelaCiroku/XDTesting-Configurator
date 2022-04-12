@@ -44,7 +44,7 @@ export class FragmentDetailComponent {
     const fragmentName = this.fragment.name;
     this.deleting = true;
 
-    const $sub = this.apiService.deleteTest(fragmentName, testId)
+    const $sub = this.apiService.deleteTestFromFragment(fragmentName, testId)
       .pipe(tap((res) => {
         if (!res.success) {
           this.errorMsg = res.message;
@@ -86,7 +86,7 @@ export class FragmentDetailComponent {
         continue;
       }
 
-      $observables.push(this.apiService.uploadFile(fragmentName, file));
+      $observables.push(this.apiService.uploadFile(file, fragmentName));
     }
 
     const $sub = forkJoin($observables)

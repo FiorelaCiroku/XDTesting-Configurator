@@ -20,11 +20,6 @@ export class SelectFileComponent implements OnInit {
   ngOnInit(): void {
     const fragmentName = this._config.data.fragmentName;
 
-    if (!fragmentName) {
-      this.error = 'Fragment name not specified';
-      return;
-    }
-
     const $sub = this._apiService.listFiles(fragmentName)
       .subscribe((files) => {
         this.files = files;
