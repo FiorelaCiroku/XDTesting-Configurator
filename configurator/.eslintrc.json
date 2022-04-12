@@ -1,0 +1,37 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "*.html",
+    "*.scss"
+  ],
+  "rules": {
+    "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/quotes": ["error", "single"],
+    "@typescript-eslint/semi": ["error", "always"],
+    "@typescript-eslint/explicit-function-return-type": "off",
+
+    "eqeqeq": "warn",
+    "keyword-spacing": "warn",
+    "no-shadow": "off",
+    "prefer-const": "error",
+    "quotes": "off",
+    "semi": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": ["error"]
+      }
+    }
+  ]
+}

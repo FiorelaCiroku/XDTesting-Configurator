@@ -1,0 +1,321 @@
+<ng-container *ngIf="initErrorMsg">
+  <div class="alert alert-danger">
+    <span *ngIf="initErrorMsg">{{initErrorMsg}}</span>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="!initErrorMsg && !saved">
+  <h1 class="mb-0">{{ test ? 'Edit' : 'Create'}} Test {{ test ? test.id : '' }}</h1>
+  <h4 class="mb-5">{{fragmentName}}</h4>
+</ng-container>
+
+<config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert">
+  <ng-container *ngIf="saved">
+    Fragment successfully saved
+    <br>
+    <a [routerLink]="test ? '../..' : '..'" class="btn btn-link p-0 text-decoration-none">
+      <i class="fa-solid fa-angle-left"></i>
+      Back
+    </a>
+  </ng-container>
+  <ng-container *ngIf="!saved">
+    Error during fragment save: {{ saveErrorMsg }}
+  </ng-container>
+</config-alert>
+
+<ng-container  *ngIf="!initErrorMsg && !saved">
+  <form *ngIf="formGroup" [formGroup]="formGroup" (submit)="save()" novalidate>
+    <h5 class="font-weight-bold">Details</h5>
+
+    <div class="mb-3" validationFeedback>
+      <label for="test-type" class="form-label">Type</label>
+      <select id="test-type" class="form-select" formControlName="type" required (change)="onTypeSelect()">
+        <option [value]="null"></option>
+        <option *ngFor="let testType of testTypes | keyvalue" [value]="testType.key">{{ testType.value.label }}</option>
+      </select>
+    </div>
+
+    <div class="mb-3" validationFeedback>
+      <label for="content" class="form-label">Requirement</label>
+      <textarea id="content" class="form-control" formControlName="content" required></textarea>
+    </div>
+
+    <div class="mb-3" *ngIf="formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION'">
+      <label class="form-label">Query</label>
+
+      <div class="d-flex align-items-center mb-2">
+        <p-inputSwitch [(ngModel)]="useUploadedQuery"
+                       [ngModelOptions]="{standalone: true}"
+                       (ngModelChange)="onToggleUploadQuery()">
+        </p-inputSwitch>
+
+        <span class="ms-2">Use previously uploaded query</span>
+      </div>
+
+      <div class="d-flex align-items-center mb-2" *ngIf="!useUploadedQuery">
+        <p-inputSwitch [(ngModel)]="uploadQuery"
+                       [ngModelOptions]="{standalone: true}"
+                       (ngModelChange)="onToggleUploadQuery()">
+        </p-inputSwitch>
+        <span class="ms-2">Upload query</span>
+      </div>
+
+      <small *ngIf="test?.queryFileName">
+        Current uploaded file: <b>{{test?.queryFileName}}</b>
+      </small>
+
+      <small *ngIf="formGroup?.controls?.queryFile?.value">
+        New file: <b>{{formGroup.controls.queryFile?.value}}</b>
+      </small>
+
+
+      <button type="button"
+              class="btn btn-primary w-100 w-sm-auto"
+              *ngIf="useUploadedQuery"
+              (click)="selectQueryFile()">
+        Select query file
+      </button>
+
+      <div validationFeedback *ngIf="!useUploadedQuery">
+        <textarea id="query" class="form-control code-input" formControlName="query" *ngIf="!uploadQuery" [required]="!uploadQuery"></textarea>
+        <input id="queryFile"
+               class="form-control"
+               type="file"
+               *ngIf="uploadQuery"
+               formControlName="queryFile"
+               [required]="uploadQuery">
+      </div>
+    </div>
+
+
+
+    <h5 class="font-weight-bold mt-5 mb-3">Data</h5>
+
+    <div class="mb-3">
+      <small class="d-block" *ngIf="test?.dataFileName">
+        Current data file:
+        <b>{{test?.dataFileName}}</b>
+      </small>
+
+      <small class="d-block" *ngIf="test?.expectedResultsFileName">
+        Current expected results file:
+        <b>{{test?.expectedResultsFileName}}</b>
+      </small>
+
+      <small class="d-block" *ngIf="(
+                                      formGroup?.controls?.dataFile?.value &&
+                                      formGroup?.controls?.dataFile?.value.length > 0
+                                    )
+                                    ||
+                                    (
+                                      formGroup?.controls?.dataFileName?.value &&
+                                      formGroup?.controls?.dataFileName?.value !== test?.dataFileName
+                                    )"
+      >
+        New data file:
+        <b>{{formGroup?.controls?.dataFile?.value?.[0]?.name || formGroup?.controls?.dataFileName?.value}}</b>
+      </small>
+
+      <small class="d-block" *ngIf="(
+                                      formGroup?.controls?.expectedResultsFile?.value &&
+                                      formGroup?.controls?.expectedResultsFile?.value.length > 0
+                                    )
+                                    ||
+                                    (
+                                      formGroup?.controls?.expectedResultsFileName?.value &&
+                                      formGroup?.controls?.expectedResultsFileName?.value !== test?.expectedResultsFileName
+                                    )"
+      >
+        New expected results file:
+        <b>{{formGroup?.controls?.expectedResultsFile?.value?.[0]?.name || formGroup?.controls?.expectedResultsFileName?.value}}</b>
+      </small>
+    </div>
+
+
+    <div class="d-flex align-items-center mb-2">
+      <p-inputSwitch [(ngModel)]="useUploadedDataAndResults"
+                     [ngModelOptions]="{standalone: true}"
+                     (ngModelChange)="onToggleUploadData()">
+      </p-inputSwitch>
+
+      <span class="ms-2">Use previously uploaded data</span>
+    </div>
+
+    <ng-container *ngIf="useUploadedDataAndResults">
+      <button type="button"
+              class="btn btn-primary w-100 w-sm-auto"
+              (click)="selectDataFile()">
+        Select data file
+      </button>
+
+      <button type="button"
+              *ngIf="formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION'"
+              class="btn btn-primary ms-0 ms-sm-2 w-100 w-sm-auto"
+              (click)="selectExpectedResultsFile()">
+        Select expected results file
+      </button>
+    </ng-container>
+
+
+    <ng-container *ngIf="!useUploadedDataAndResults">
+      <div class="d-flex align-items-center mb-2">
+        <p-inputSwitch [(ngModel)]="uploadFile"
+                       [ngModelOptions]="{standalone: true}"
+                       (ngModelChange)="onToggleUploadData()">
+        </p-inputSwitch>
+
+        <span class="ms-2">Upload files</span>
+      </div>
+
+      <ng-container *ngIf="uploadFile">
+        <div validationFeedback class="mb-3">
+          <label for="dataFile">Data file</label>
+          <input id="dataFile"
+                 class="form-control"
+                 type="file"
+                 formControlName="dataFile"
+                 configFileInput
+                 [required]="!formGroup?.controls?.dataFileName?.value">
+        </div>
+
+
+        <div validationFeedback class="mb-3" *ngIf="formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION'">
+          <label for="expectedResultsFile">Expected results file</label>
+          <input id="expectedResultsFile"
+                 class="form-control"
+                 type="file"
+                 formControlName="expectedResultsFile"
+                 configFileInput
+                 [required]="!formGroup?.controls?.expectedResultsFileName?.value">
+        </div>
+      </ng-container>
+
+
+
+      <ng-container *ngIf="!uploadFile" formGroupName="data">
+
+        <div validationFeedback class="mt-3 mb-5">
+          <label for="prefixes" class="form-label">Prefixes</label>
+          <textarea class="form-control code-input" formControlName="prefixes" id="prefixes"></textarea>
+        </div>
+
+        <div class="text-end mb-2">
+          <button type="button" class="btn btn-primary" (click)="addDataRow()">
+            <i class="fa-solid fa-plus"></i>
+            &nbsp;
+            Add row
+          </button>
+        </div>
+
+        <ng-container formArrayName="rows">
+          <p-table [value]="dataRows || []" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th></th>
+                <th class="text-center" *ngIf="formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION'">
+                  Expected result
+                </th>
+                <th>Subject</th>
+                <th>Predicate</th>
+                <th>Object</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row let-i="rowIndex">
+              <tr [formGroup]="row">
+                <td class="text-center">
+                  <button class="btn" (click)="removeDataRow(i)">
+                    <i class="text-danger fa-solid fa-minus-circle"></i>
+                  </button>
+                </td>
+                <td class="text-center" *ngIf="formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION'">
+                  <p-checkbox [formControl]="row.controls.expectedResult" [binary]="true"></p-checkbox>
+                </td>
+                <td>
+                  <input type="text" formControlName="subject" class="form-control">
+                </td>
+                <td>
+                  <input type="text" formControlName="predicate" class="form-control">
+                </td>
+                <td>
+                  <input type="text" formControlName="object" class="form-control">
+                </td>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td class="text-center" [attr.colspan]="formGroup?.controls?.type?.value !== 'ERROR_PROVOCATION' ? 4 : 5">
+                  No data defined
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </ng-container>
+      </ng-container>
+
+
+    </ng-container>
+
+
+
+    <div class="text-end my-4">
+      <a [routerLink]="test ? '../..' : '..'" class="btn btn-secondary w-100 w-sm-auto mb-1 mb-sm-0 me-0 me-sm-1">
+        Cancel
+      </a>
+
+      <button type="submit" class="btn btn-primary w-100 w-sm-auto ">
+        Save
+      </button>
+    </div>
+  </form>
+</ng-container>
+
+
+<ng-container *ngIf="saved && savedTest">
+  <table>
+    <tr>
+      <th class="pe-2">ID</th>
+      <td>{{ savedTest.id }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.type">
+      <th class="pe-2">Type</th>
+      <td>{{ testTypes[savedTest.type].label }}</td>
+    </tr>
+
+    <tr>
+      <th class="pe-2">Content</th>
+      <td>{{ savedTest.content }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.query">
+      <th class="pe-2">Query</th>
+      <td>{{ savedTest.query }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.queryFileName">
+      <th class="pe-2">Query File Name</th>
+      <td>{{ savedTest.queryFileName }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.data">
+      <th class="pe-2">Data</th>
+      <td>{{ savedTest.data }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.dataFileName">
+      <th class="pe-2">Data File Name</th>
+      <td>{{ savedTest.dataFileName }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.expectedResults">
+      <th class="pe-2">Expected Results</th>
+      <td>{{ savedTest.expectedResults }}</td>
+    </tr>
+
+    <tr *ngIf="savedTest.expectedResultsFileName">
+      <th class="pe-2">Expected Results File Name</th>
+      <td>{{ savedTest.expectedResultsFileName }}</td>
+    </tr>
+  </table>
+</ng-container>

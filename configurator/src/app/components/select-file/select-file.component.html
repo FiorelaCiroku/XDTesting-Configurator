@@ -1,0 +1,21 @@
+<config-alert *ngIf="error" type="danger" [dismissable]="false">
+  {{ error }}
+</config-alert>
+
+<p-table [value]="files" responsiveLayout="scroll" [loading]="loading" [paginator]="true"
+         [rows]="15" [rowsPerPageOptions]="[15,30,60]">
+  <ng-template pTemplate="body" let-file>
+    <tr (click)="onFileSelected(file)">
+      <td>
+        {{ file.name }}
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td class="text-center">
+        No files uploaded yet
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

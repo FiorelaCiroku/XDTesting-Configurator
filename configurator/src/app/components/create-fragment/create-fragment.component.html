@@ -1,0 +1,69 @@
+<h1 class="mb-5">Create New Fragment</h1>
+
+<div class="alert alert-{{saved ? 'success' : 'danger'}}" *ngIf="showAlert">
+  <div class="row">
+    <div class="col">
+      <ng-container *ngIf="saved">
+        Fragment successfully saved
+        <br>
+        <a routerLink=".." class="btn btn-link p-0 text-decoration-none">
+          <i class="fa-solid fa-angle-left"></i>
+          Back
+        </a>
+      </ng-container>
+      <ng-container *ngIf="!saved">
+        Error during fragment save: {{ errorMsg }}
+      </ng-container>
+    </div>
+    <div class="col flex-grow-0" (click)="showAlert = false" style="cursor: pointer">
+      <i class="fa-solid fa-circle-xmark"></i>
+    </div>
+  </div>
+</div>
+
+<form (submit)="createFragment()" [formGroup]="formGroup" novalidate *ngIf="!saved">
+  <div class="mb-3" validationFeedback>
+    <label for="ontology-name" class="form-label">Ontology Name</label>
+    <input formControlName="ontologyName"
+           id="ontology-name"
+           class="form-control"
+           type="text"
+           placeholder="Ontology name"
+           required>
+  </div>
+
+  <div class="mb-3" validationFeedback>
+    <label for="fragment-name" class="form-label">Fragment Name</label>
+    <input formControlName="name"
+           id="fragment-name"
+           class="form-control"
+           type="text"
+           placeholder="Fragment name"
+           required>
+  </div>
+
+  <div class="text-center text-sm-end">
+    <button type="submit" class="btn btn-primary mb-1 mb-sm-0 me-sm-1 w-100 w-sm-auto">
+      Create
+    </button>
+    <a routerLink="../" class="btn btn-secondary w-100 w-sm-auto">
+      Cancel
+    </a>
+  </div>
+</form>
+
+<ng-container *ngIf="saved">
+  <h5>Summary</h5>
+  <p>Created fragment data:</p>
+
+  <table>
+    <tr>
+      <th>Ontology Name:</th>
+      <td>{{ formGroup.value?.ontologyName }}</td>
+    </tr>
+    <tr>
+      <th>Fragment Name:</th>
+      <td>{{ formGroup.value?.name }}</td>
+    </tr>
+  </table>
+</ng-container>

@@ -1,0 +1,134 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-dark text-light">
+  <div class="container-fluid">
+    <button class="btn d-block d-md-none text-light" (click)="displaySidebar = true">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <span>
+      <b class="me-1">XD Testing</b>
+      <small>Configurator</small>
+    </span>
+
+    <div class="d-none d-md-block">
+      <a class="btn text-light" (click)="displayModal = true">
+        <i class="fa-solid fa-caret-down"></i>
+        &nbsp;
+        <b class="me-1">{{ selectedRepo ?? 'No repository selected' }}</b>
+        <small *ngIf="selectedBranch">({{ selectedBranch }})</small>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="d-flex wrapper">
+  <div class="sidebar bg-dark text-light" [class.opened]="displaySidebar">
+    <div class="w-100 d-flex flex-column">
+
+      <div class="text-end d-block d-md-none">
+        <button class="btn text-light" (click)="displaySidebar = false">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <div class="d-block d-md-none">
+        <a class="btn text-light text-start d-flex" (click)="displayModal = true">
+          <i class="fa-solid fa-caret-down me-2"></i>
+          &nbsp;
+          <div>
+            <b class="me-1">{{ selectedRepo ?? 'No repository selected' }}</b>
+            <br>
+            <small *ngIf="selectedBranch">({{ selectedBranch }})</small>
+          </div>
+        </a>
+      </div>
+
+      <a routerLink="/fragments" routerLinkActive="active">
+        <i class="fa-solid fa-scroll"></i>
+        &nbsp;
+        Fragments
+      </a>
+
+    </div>
+  </div>
+
+  <div class="overlay"></div>
+
+  <div class="main">
+    <config-spinner *ngIf="apiService.$loading.value"
+                    class="w-100 h-100 d-flex align-items-center justify-content-center">
+    </config-spinner>
+
+    <div *ngIf="!selectedRepo || !selectedBranch" class="w-100 h-100 d-flex align-items-center justify-content-center">
+      <p class="m-0 text-center">
+        <strong>You must select a repository and a branch to work on.</strong>
+      </p>
+    </div>
+
+    <div class="container-fluid mt-3" *ngIf="selectedRepo && selectedBranch">
+      <router-outlet [hidden]="apiService.$loading | async"></router-outlet>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+
+</div>
+
+
+<p-dialog [(visible)]="displayModal"
+          [modal]="true"
+          [closeOnEscape]="false"
+          [closable]="!!(selectedRepo && selectedBranch)"
+          [style]="{width: '65vw'}">
+
+  <ng-template pTemplate="header">
+    <h3>Repository</h3>
+  </ng-template>
+
+  <div class="alert alert-danger" *ngIf="error">
+    {{ error }}
+  </div>
+
+  <strong class="d-block mb-3">Select the repository and the branch to work on</strong>
+
+  <div class="mb-3" validationFeedback>
+    <div class="form-label">Repository</div>
+
+    <select class="form-select"
+            required
+            [(ngModel)]="selectedRepo"
+            (ngModelChange)="updateBranches()"
+    >
+      <option [ngValue]="undefined"></option>
+
+      <ng-container *ngFor="let repo of $repos | async;">
+        <option *ngIf="!repo.archived" [ngValue]="repo.full_name">
+          {{ repo.full_name }}
+        </option>
+      </ng-container>
+    </select>
+  </div>
+
+
+  <div validationFeedback>
+    <div class="form-label">Branch</div>
+
+    <select class="form-select"
+            required
+            [(ngModel)]="selectedBranch"
+            [disabled]="!selectedRepo"
+    >
+      <option [ngValue]="undefined"></option>
+      <ng-container *ngFor="let branch of $branches | async;">
+        <option *ngIf="!branch.protected" [ngValue]="branch.name">
+          {{ branch.name }}
+        </option>
+      </ng-container>
+    </select>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn btn-primary" (click)="saveRepository()">Save</button>
+  </ng-template>
+</p-dialog>
+

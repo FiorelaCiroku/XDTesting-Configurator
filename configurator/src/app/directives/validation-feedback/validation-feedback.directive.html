@@ -1,0 +1,17 @@
+<ng-content></ng-content>
+
+<ng-container *ngIf="control?.status == 'VALID'">
+  <small *ngFor="let message of validMessages">
+    {{ message }}
+  </small>
+</ng-container>
+
+<ng-container *ngIf="control && control.errors && invalidMessages">
+  <!--suppress TypeScriptValidateTypes -->
+  <ng-container *ngFor="let item of invalidMessages | keyvalue">
+    <small class="invalid-feedback" *ngIf="(control.touched || !control.pristine) && control.errors[item.key]">
+      {{ item.value }}
+    </small>
+  </ng-container>
+</ng-container>
+

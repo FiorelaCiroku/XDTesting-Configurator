@@ -1,0 +1,46 @@
+@import "~bootstrap/scss/bootstrap";
+
+@each $breakpoint in map-keys($grid-breakpoints) {
+  $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+
+  @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+    .w#{$infix}-auto {
+      width: auto !important;
+    }
+
+    .w#{$infix}-100 {
+      width: 100% !important;
+    }
+  }
+}
+
+.code-input {
+  font-family: "Courier New", monospace;
+}
+
+.p-inputswitch {
+  .p-inputswitch-slider {
+    @at-root
+    &, &:before {
+      border-radius: 20px !important;
+    }
+  }
+}
+
+.p-dialog {
+  @include media-breakpoint-down('sm') {
+    width: 95vw;
+  }
+
+  @include media-breakpoint-between('sm', 'md') {
+    width: 85vw;
+  }
+
+  @include media-breakpoint-between('md', 'lg') {
+    width: 75vw;
+  }
+
+  @include media-breakpoint-up('lg') {
+    width: 65vw;
+  }
+}
