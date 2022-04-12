@@ -1,11 +1,4 @@
 {
   "type": "STANDARD",
-  "tests": [
-    {
-      "type": "COMPETENCY_QUESTION",
-      "content": "abc",
-      "query": "abc",
-      "id": "CQ001"
-    }
-  ]
+  "tests": []
 }
