@@ -1,5 +1,10 @@
 {
   "type": "XD_TESTING",
   "tests": [],
-  "fragments": []
+  "fragments": [
+    {
+      "name": "Fragment 1",
+      "ontologyName": "Ontology name"
+    }
+  ]
 }
