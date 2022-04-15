@@ -4,7 +4,15 @@
   "fragments": [
     {
       "name": "Fragment 1",
-      "ontologyName": "Ontology name"
+      "ontologyName": "Ontology name",
+      "tests": [
+        {
+          "type": "COMPETENCY_QUESTION",
+          "content": "abc",
+          "query": "abc",
+          "id": "CQ001"
+        }
+      ]
     }
   ]
 }
