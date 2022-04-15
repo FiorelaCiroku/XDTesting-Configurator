@@ -1,20 +1,5 @@
 {
   "type": "XD_TESTING",
   "tests": [],
-  "fragments": [
-    {
-      "name": "Fragment 1",
-      "ontologyName": "Ontology name",
-      "tests": [
-        {
-          "type": "GENERAL_CONSTRAINT",
-          "content": "Artist is not an Event",
-          "query": "abc",
-          "data": "abc\n\nabc abc abc\ndef def def\n",
-          "expectedResults": "abc\n\ndef def def\n",
-          "id": "GC001"
-        }
-      ]
-    }
-  ]
+  "fragments": []
 }
