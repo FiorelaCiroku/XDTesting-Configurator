@@ -1,4 +1,18 @@
 {
-  "type": "STANDARD",
-  "tests": []
+  "type": "XD_TESTING",
+  "tests": [],
+  "fragments": [
+    {
+      "name": "Fragment 1",
+      "ontologyName": "Ontology name",
+      "tests": [
+        {
+          "type": "COMPETENCY_QUESTION",
+          "content": "abc",
+          "query": "abc",
+          "id": "CQ001"
+        }
+      ]
+    }
+  ]
 }
