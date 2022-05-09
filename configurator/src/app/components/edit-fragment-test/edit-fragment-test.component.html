@@ -112,7 +112,7 @@
                                       formGroup?.controls?.dataFileName?.value !== test?.dataFileName
                                     )"
       >
-        New data file:
+        New sample dataset file:
         <b>{{formGroup?.controls?.dataFile?.value?.[0]?.name || formGroup?.controls?.dataFileName?.value}}</b>
       </small>
 
@@ -145,7 +145,7 @@
       <button type="button"
               class="btn btn-primary w-100 w-sm-auto"
               (click)="selectDataFile()">
-        Select data file
+        Select sample dataset file
       </button>
 
       <button type="button"
@@ -169,7 +169,7 @@
 
       <ng-container *ngIf="uploadFile">
         <div validationFeedback class="mb-3">
-          <label for="dataFile">Data file</label>
+          <label for="dataFile">Sample dataset file</label>
           <input id="dataFile"
                  class="form-control"
                  type="file"
@@ -304,7 +304,7 @@
     </tr>
 
     <tr *ngIf="savedTest.dataFileName">
-      <th class="pe-2">Data File Name</th>
+      <th class="pe-2">Sample dataset file Name</th>
       <td>{{ savedTest.dataFileName }}</td>
     </tr>
 
