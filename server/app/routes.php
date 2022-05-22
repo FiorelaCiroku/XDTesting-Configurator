@@ -72,8 +72,16 @@ return function (App $app) {
                 ->withHeader('Content-Type', 'application/json');
         }
 
-        $token = $code . "*|*" . $data['access_token'] . "*|*" . $code;
-        $token = openssl_encrypt($token, 'aes-256-cbc', $_ENV['AES_SECRET'], iv: $_ENV['AES_IV']);
+        $prevSalt = random_bytes(31);
+        $nextSalt = random_bytes(61);
+
+        $token = preg_replace("/^gho_/", "", $token);
+        $token = base64_encode($prevSalt . $token . $nextSalt);
+
+        $iv = random_bytes(16);
+        $token = openssl_encrypt($token, 'aes-256-cbc', $_ENV['AES_SECRET'], iv: $iv);
+
+        return base64_encode(base64_encode($iv) . '.' . base64_encode($token));
 
         setcookie('GITHUB_TOKEN', $token, httponly: true);
 
@@ -101,18 +109,16 @@ return function (App $app) {
                 return $response->withStatus(401, 'Unauthorized');
             }
 
-            $token = $cookies['GITHUB_TOKEN'];
-            $token = openssl_decrypt($token, 'aes-256-cbc', $_ENV['AES_SECRET'], iv: $_ENV['AES_IV']);
+            [$iv, $token] = explode('.', base64_decode($token));
+            $token = openssl_decrypt(base64_decode($token), 'aes-256-cbc', $_ENV['AES_SECRET'], iv: base64_decode($iv));
 
             if ($token === false) {
                 return $response->withStatus(401, 'Unauthorized');
             }
 
-            $token = explode('*|*', $token);
+            $token = base64_decode($token);
+            $token = 'gho_' . substr($token, 31, -61);
 
-            if (count($token) !== 3) {
-                return $response->withStatus(401, 'Unauthorized');
-            }
 
             $path = $request->getUri()->getPath();
             if (str_starts_with($path, '/')) {
