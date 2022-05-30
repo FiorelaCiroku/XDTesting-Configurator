@@ -11,6 +11,17 @@
           "content": "abc",
           "query": "abc",
           "id": "CQ001"
+        },
+        {
+          "type": "COMPETENCY_QUESTION",
+          "content": "abc",
+          "query": "abc",
+          "data": "@prefix foo: <http://foo.example>\n@prefix : <http://example.com>\n\nfoo:sub foo:pred foo:obj\n:sub2 :pred2 :obj2\n",
+          "expectedResults": "@prefix foo: <http://foo.example>\n@prefix : <http://example.com>\n\n:sub2 :pred2 :obj2\n",
+          "queryFileName": "",
+          "dataFileName": "",
+          "expectedResultsFileName": "",
+          "id": "CQ002"
         }
       ]
     }
