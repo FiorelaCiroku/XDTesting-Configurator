@@ -44,13 +44,17 @@ export class TestCrudComponent implements OnDestroy {
   test?: TestDetail;
   initErrorMsg?: string;
   fg: TypedFormGroup<TestDetailForm>;
-  dataFgs: FileInputFormGroupSpec[];
-  queryFg: FileInputFormGroupSpec[];
+  dataFg!: FileInputFormGroupSpec;
+  expectedResultFg?: FileInputFormGroupSpec;
+  queryFg!: FileInputFormGroupSpec;
   saved?: boolean;
   savedTestSummary?: Summary[];
   showAlert = false;
   saveErrorMsg?: string;
   testTypes = TEST_TYPE_DEFINITIONS;
+
+  useDataFile = false;
+  useExpectedResultsFile = false;
 
 
   @ViewChild('alert', {read: ElementRef}) alert!: ElementRef<HTMLElement>;
@@ -82,11 +86,8 @@ export class TestCrudComponent implements OnDestroy {
       })
     });
 
-
-    this.queryFg = this._initQueryFgs();
-    this.dataFgs = this._initDataFgs();
-
     this._init();
+    this._initFormGroupSpecs();
   }
 
   ngOnDestroy(): void {
@@ -94,8 +95,7 @@ export class TestCrudComponent implements OnDestroy {
   }
 
   onTypeSelect(): void {
-    this.queryFg = this._initQueryFgs();
-    this.dataFgs = this._initDataFgs();
+    this._initFormGroupSpecs();
 
     const topControls = this.fg.controls;
     topControls.query.reset();
@@ -104,13 +104,19 @@ export class TestCrudComponent implements OnDestroy {
     topControls.dataContent.reset();
   }
 
-  resetDataAndExpectedResults(): void {
+  resetDataAndExpectedResults(which: 'data' | 'expectedResults', checked: boolean): void {
     const dataContentControls = this.fg.controls.dataContent.controls;
 
     this.fg.controls.expectedResults.reset();
     this.fg.controls.data.reset();
     dataContentControls.prefixes.reset();
     dataContentControls.rows = new TypedFormArray<DataSpec>([]);
+
+    if (which === 'data') {
+      this.useDataFile = checked;
+    } else {
+      this.useExpectedResultsFile = checked;
+    }
   }
 
   selectFile(fg: FileInputFormGroupSpec): void {
@@ -126,9 +132,10 @@ export class TestCrudComponent implements OnDestroy {
       fg.formGroup.patchValue({
         content: '',
         file: undefined,
-        fileName: file.name
+        fileName: `${file.name}.${file.extension}`
       });
 
+      console.log({fg, val: this.fg.value});
       $sub.unsubscribe();
     });
   }
@@ -183,9 +190,9 @@ export class TestCrudComponent implements OnDestroy {
 
 
     if (formValue.query.file?.length || formValue.query.fileName) {
-      $queryFileUpload = this._apiService.uploadFile(formValue.query.file[0], 'query', this.fragment);
-      updateValue.queryFileName = this.fragment.ontologyName + this.fragment.name +
-        `/${FILE_TYPES['query']}/` +
+      $queryFileUpload = this._apiService.uploadFile(formValue.query.file?.[0], 'query', this.fragment);
+      updateValue.queryFileName = this.fragment.ontologyName + '/' + this.fragment.name +
+        `/${FILE_TYPES['query'].folder}/` +
         (formValue.query.file?.[0]?.name || formValue.query.fileName);
 
     } else if (formValue?.query) {
@@ -195,21 +202,21 @@ export class TestCrudComponent implements OnDestroy {
 
     if (formValue.expectedResults.file?.length || formValue.expectedResults.fileName) {
       $expectedResultsFileUpload = this._apiService.uploadFile(
-        formValue.expectedResults.file[0],
+        formValue.expectedResults.file?.[0],
         'expectedResults',
         this.fragment
       );
 
-      updateValue.expectedResultsFileName = this.fragment.ontologyName + this.fragment.name +
-        `/${FILE_TYPES['expectedResults']}/` +
+      updateValue.expectedResultsFileName = this.fragment.ontologyName + '/' + this.fragment.name +
+        `/${FILE_TYPES['expectedResults'].folder}/` +
         (formValue.expectedResults.file?.[0]?.name || formValue.expectedResults.fileName);
     }
 
 
     if (formValue.data.file?.length || formValue.data.fileName) {
-      $dataFileUpload = this._apiService.uploadFile(formValue.data.file[0], 'dataset', this.fragment);
-      updateValue.dataFileName = this.fragment.ontologyName + this.fragment.name +
-        `/${FILE_TYPES['dataset']}/` +
+      $dataFileUpload = this._apiService.uploadFile(formValue.data.file?.[0], 'dataset', this.fragment);
+      updateValue.dataFileName = this.fragment.ontologyName + '/' + this.fragment.name +
+        `/${FILE_TYPES['dataset'].folder}/` +
         (formValue.data.file?.[0]?.name || formValue.data.fileName);
 
     } else if (formValue.dataContent.rows.length) {
@@ -305,6 +312,18 @@ export class TestCrudComponent implements OnDestroy {
       return { expectedResult, subject, predicate, object, graph };
     });
 
+    const formArray = this.fg.controls.dataContent.controls.rows;
+
+    for (let i = 0; i < rows.length; i++) {
+      formArray.push(new TypedFormGroup<DataSpec>({
+        expectedResult: new TypedFormControl<boolean>(false),
+        subject: new TypedFormControl<string>(''),
+        object: new TypedFormControl<string>(''),
+        predicate: new TypedFormControl<string>(''),
+        graph: new TypedFormControl<string | undefined>()
+      }));
+    }
+
     this.fg.patchValue({
       content: test.content,
       type: test.type,
@@ -314,9 +333,7 @@ export class TestCrudComponent implements OnDestroy {
       dataContent: {prefixes, rows},
     });
 
-
-    this.queryFg = this._initQueryFgs();
-    this.dataFgs = this._initDataFgs();
+    this._initFormGroupSpecs();
   }
 
   private static _getQueryLabel(type: TestType): string {
@@ -331,32 +348,43 @@ export class TestCrudComponent implements OnDestroy {
     return 'Query';
   }
 
-  private _initQueryFgs(): FileInputFormGroupSpec[] {
+  private _initFormGroupSpecs(): void {
+    this.queryFg = this._initQueryFg();
+    this.dataFg = this._initDataFg();
+    this.expectedResultFg = this._initExpectedResultsFg();
+  }
+
+  private _initQueryFg(): FileInputFormGroupSpec {
     const label = TestCrudComponent._getQueryLabel(this.fg.controls.type.value);
     const placeholder = 'SELECT DISTINCT ?Concept WHERE {[] a ?Concept}';
 
-    return [{
+    return {
       label,
       formGroup: this.fg.controls.query,
       placeholder
-    }];
+    };
   }
 
-  private _initDataFgs(): FileInputFormGroupSpec[] {
+  private _initDataFg(): FileInputFormGroupSpec {
     const type: TestType = this.fg.controls.type.value;
-    const result: FileInputFormGroupSpec[] = [{
+
+    return {
       label: 'Sample dataset' + (type === 'ERROR_PROVOCATION' ? ' with errors' : ''),
       formGroup: this.fg.controls.data
-    }];
+    };
+  }
 
-    if (type === 'COMPETENCY_QUESTION') {
-      result.push({
-        label: 'Expected results',
-        formGroup: this.fg.controls.expectedResults
-      });
+  private _initExpectedResultsFg(): FileInputFormGroupSpec | undefined {
+    const type: TestType = this.fg.controls.type.value;
+
+    if (type !== 'COMPETENCY_QUESTION') {
+      return undefined;
     }
 
-    return result;
+    return {
+      label: 'Expected results',
+      formGroup: this.fg.controls.expectedResults
+    };
   }
 
   private _checkRequired(): string[] | boolean {
@@ -381,7 +409,7 @@ export class TestCrudComponent implements OnDestroy {
           errors.push('Sample dataset');
         }
 
-        return [];
+        return errors;
 
       case 'ERROR_PROVOCATION':
         if (!data.file?.length && !data.fileName && countDataRows <= 0) {

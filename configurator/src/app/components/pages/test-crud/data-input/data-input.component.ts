@@ -11,11 +11,24 @@ import { DataSpec, TestDetailForm } from '../../../../models';
 export class DataInputComponent implements OnInit {
 
   @Input() withExpectedResults = true;
+  @Input() onlyExpectedResults = false;
 
   formGroup?: TypedFormGroup<TestDetailForm['dataContent']>;
+
+  get title(): string {
+    if (this.withExpectedResults) {
+      return 'Sample dataset with expected results';
+    } else if (this.onlyExpectedResults) {
+      return 'Expected results';
+    }
+
+    return 'Sample dataset';
+  }
+
   get rows(): TypedFormGroup<DataSpec>[] {
     return this.formGroup?.controls.rows.controls || [];
   }
+
 
   constructor(private controlContainer: ControlContainer) {
   }
@@ -32,7 +45,7 @@ export class DataInputComponent implements OnInit {
     }
 
     const formGroup = new TypedFormGroup<DataSpec>({
-      expectedResult: new TypedFormControl<boolean>(false),
+      expectedResult: new TypedFormControl<boolean>(this.onlyExpectedResults),
       subject: new TypedFormControl<string>(''),
       object: new TypedFormControl<string>(''),
       predicate: new TypedFormControl<string>(''),

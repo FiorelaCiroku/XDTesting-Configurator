@@ -1,55 +1,52 @@
-<ng-container *ngIf="formGroups">
-  <div class="mb-5" *ngFor="let fg of formGroups; let i = index" [formGroup]="fg.formGroup">
+<ng-container *ngIf="formGroupSpec && formGroupSpec.formGroup" [formGroup]="formGroupSpec.formGroup">
+  <label class="form-label">{{ formGroupSpec.label }}</label>
+  <div class="d-flex align-items-center mb-2">
+    <p-inputSwitch [(ngModel)]="useUploadedFile"
+                   [ngModelOptions]="{standalone: true}"
+                   (ngModelChange)="onToggle()">
+    </p-inputSwitch>
 
-    <label class="form-label">{{ fg.label }}</label>
-    <div class="d-flex align-items-center mb-2">
-      <p-inputSwitch [(ngModel)]="useUploadedFile[i]"
-                     [ngModelOptions]="{standalone: true}"
-                     (ngModelChange)="onToggle(i, fg.formGroup, $event)">
-      </p-inputSwitch>
-
-      <span class="ms-2">Use uploaded "{{ fg.label }}"</span>
-    </div>
-
-    <div class="d-flex align-items-center mb-2" *ngIf="!useUploadedFile[i]">
-      <p-inputSwitch [(ngModel)]="uploadFile[i]"
-                     [ngModelOptions]="{standalone: true}"
-                     (ngModelChange)="onToggle(i, fg.formGroup, $event)">
-      </p-inputSwitch>
-      <span class="ms-2">Upload new "{{ fg.label }}"</span>
-    </div>
-
-    <small *ngIf="currentFiles[i]">
-      Current "{{ fg.label }}" file: <b>{{ currentFiles[i] }}</b>
-    </small>
-
-    <small *ngIf="fg.formGroup.controls.file.value && fg.formGroup.controls.file.value !== currentFiles[i]">
-      New "{{ fg.label }}" file: <b>{{ fg.formGroup.controls.file.value }}</b>
-    </small>
-
-
-    <button type="button" class="btn btn-primary w-100 w-sm-auto" *ngIf="useUploadedFile[i]"
-            (click)="onShowExistingFiles.emit(fg)">
-      Select existing "{{ fg.label }}" file
-    </button>
-
-    <div *ngIf="!useUploadedFile[i]">
-      <ng-container *ngIf="showDefaultInput">
-        <textarea class="form-control code-input" formControlName="content" *ngIf="!uploadFile[i]"
-                  [placeholder]="fg.placeholder">
-        </textarea>
-      </ng-container>
-
-      <input class="form-control"
-             type="file"
-             *ngIf="uploadFile[i]"
-             formControlName="file"
-             configFileInput>
-    </div>
-
+    <span class="ms-2">Use uploaded "{{ formGroupSpec.label }}"</span>
   </div>
+
+  <div class="d-flex align-items-center mb-2" *ngIf="!useUploadedFile">
+    <p-inputSwitch [(ngModel)]="uploadFile"
+                   [ngModelOptions]="{standalone: true}"
+                   (ngModelChange)="onToggle()">
+    </p-inputSwitch>
+    <span class="ms-2">Upload new "{{ formGroupSpec.label }}"</span>
+  </div>
+
+  <small class="d-block" *ngIf="currentFile" [class.mb-2]="!shouldShowNewFile()">
+    Current "{{ formGroupSpec.label }}" file: <b>{{ currentFile }}</b>
+  </small>
+
+  <small class="d-block" *ngIf="shouldShowNewFile()" [class.mb-2]="shouldShowNewFile()">
+    New "{{ formGroupSpec.label }}" file: <b>{{ formGroupSpec.formGroup.controls.file.value || formGroupSpec.formGroup.controls.fileName.value }}</b>
+  </small>
+
+
+  <button type="button" class="btn btn-primary w-100 w-sm-auto" *ngIf="useUploadedFile"
+          (click)="onShowExistingFiles.emit(formGroupSpec)">
+    Select existing "{{ formGroupSpec.label }}" file
+  </button>
+
+  <div *ngIf="!useUploadedFile">
+    <ng-container *ngIf="showDefaultInput">
+        <textarea class="form-control code-input" formControlName="content" *ngIf="!uploadFile"
+                  [placeholder]="formGroupSpec.placeholder">
+        </textarea>
+    </ng-container>
+
+    <input class="form-control"
+           type="file"
+           *ngIf="uploadFile"
+           formControlName="file"
+           configFileInput>
+  </div>
+
 </ng-container>
 
-<ng-container *ngIf="!showDefaultInput && showContentInput">
+<ng-container *ngIf="!showDefaultInput">
   <ng-content></ng-content>
 </ng-container>
