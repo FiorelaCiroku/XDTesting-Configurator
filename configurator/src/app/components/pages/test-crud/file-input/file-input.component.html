@@ -8,7 +8,7 @@
                      (ngModelChange)="onToggle(i, fg.formGroup, $event)">
       </p-inputSwitch>
 
-      <span class="ms-2">Use uploaded {{ fg.label | lowercase }}</span>
+      <span class="ms-2">Use uploaded "{{ fg.label }}"</span>
     </div>
 
     <div class="d-flex align-items-center mb-2" *ngIf="!useUploadedFile[i]">
@@ -16,27 +16,27 @@
                      [ngModelOptions]="{standalone: true}"
                      (ngModelChange)="onToggle(i, fg.formGroup, $event)">
       </p-inputSwitch>
-      <span class="ms-2">Upload new {{ fg.label | lowercase }}</span>
+      <span class="ms-2">Upload new "{{ fg.label }}"</span>
     </div>
 
     <small *ngIf="currentFiles[i]">
-      Current {{ fg.label | lowercase }} file: <b>{{ currentFiles[i] }}</b>
+      Current "{{ fg.label }}" file: <b>{{ currentFiles[i] }}</b>
     </small>
 
     <small *ngIf="fg.formGroup.controls.file.value && fg.formGroup.controls.file.value !== currentFiles[i]">
-      New {{ fg.label | lowercase }} file: <b>{{ fg.formGroup.controls.file.value }}</b>
+      New "{{ fg.label }}" file: <b>{{ fg.formGroup.controls.file.value }}</b>
     </small>
 
 
     <button type="button" class="btn btn-primary w-100 w-sm-auto" *ngIf="useUploadedFile[i]"
             (click)="onShowExistingFiles.emit(fg)">
-      Select existing {{ fg.label | lowercase }} file
+      Select existing "{{ fg.label }}" file
     </button>
 
     <div *ngIf="!useUploadedFile[i]">
       <ng-container *ngIf="showDefaultInput">
         <textarea class="form-control code-input" formControlName="content" *ngIf="!uploadFile[i]"
-                  [required]="!uploadFile[i] && !useUploadedFile[i]" [placeholder]="fg.placeholder">
+                  [placeholder]="fg.placeholder">
         </textarea>
       </ng-container>
 
@@ -44,8 +44,7 @@
              type="file"
              *ngIf="uploadFile[i]"
              formControlName="file"
-             configFileInput
-             [required]="uploadFile[i] && !useUploadedFile[i]">
+             configFileInput>
     </div>
 
   </div>

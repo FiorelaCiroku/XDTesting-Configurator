@@ -29,7 +29,6 @@ export class HttpInterceptorService implements HttpInterceptor {
 
     return next.handle(req)
       .pipe(finalize(() => {
-        console.log('finalize');
         this._setLoading(reqUrl, false);
       }))
       .pipe(catchError((err: HttpErrorResponse) => {
@@ -45,11 +44,7 @@ export class HttpInterceptorService implements HttpInterceptor {
 
   private _setLoading(reqUrl: string, loading: boolean): void {
     if (!reqUrl.endsWith('is-auth')) {
-      console.log('set loading', loading);
       this.apiService.$loading.next(loading);
-      return;
     }
-
-    console.log('discarded set loading', loading);
   }
 }

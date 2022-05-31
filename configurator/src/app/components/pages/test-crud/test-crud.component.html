@@ -9,7 +9,7 @@
   <h4 class="mb-5">{{fragment?.name}}</h4>
 </ng-container>
 
-<config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert">
+<config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert" #alert>
   <ng-container *ngIf="saved">
     Test case successfully saved
     <br>
@@ -45,12 +45,11 @@
                        (onShowExistingFiles)="selectFile($event)"></config-file-input>
 
 
-
     <h5 class="font-weight-bold mt-5 mb-3">Data</h5>
 
     <config-file-input [formGroups]="dataFgs" [showDefaultInput]="false" (onShowExistingFiles)="selectFile($event)"
                        (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults()">
-      <config-data-input [withExpectedResults]="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'"
+      <config-data-input [withExpectedResults]="fg?.controls?.type?.value === 'COMPETENCY_QUESTION'"
                          [formGroup]="fg.controls.dataContent"></config-data-input>
     </config-file-input>
 

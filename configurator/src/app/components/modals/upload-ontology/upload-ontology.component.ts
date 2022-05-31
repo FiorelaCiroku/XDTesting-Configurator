@@ -43,7 +43,6 @@ export class UploadOntologyComponent {
     }
 
     const fgValue = this.formGroup.value;
-    console.log('valid', fgValue);
 
     if (!fgValue) {
       this.errorMsg = 'Unknown error';

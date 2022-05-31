@@ -50,7 +50,6 @@ export class SelectRepoComponent {
   }
 
   onRepositorySelection(): void {
-    console.log('onRepositorySelection');
     if (!this.selectedRepo) {
       this.branches = [];
       return;

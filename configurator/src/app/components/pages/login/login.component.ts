@@ -27,7 +27,6 @@ export class LoginComponent implements OnDestroy {
           this.authenticating = true;
           return this.httpClient.get(`${baseUrl}/login-callback?code=${params.code}`);
         }
-        console.log('Empty');
         return EMPTY;
       }))
 
@@ -39,7 +38,6 @@ export class LoginComponent implements OnDestroy {
       }))
 
       .subscribe(() => {
-        console.log('sub');
         this.authenticating = false;
       });
   }

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ControlContainer } from '@angular/forms';
-import { TypedFormControl, TypedFormGroup } from '../../../../utils/typed-form';
+import { TypedFormArray, TypedFormControl, TypedFormGroup } from '../../../../utils/typed-form';
 import { DataSpec, TestDetailForm } from '../../../../models';
 
 @Component({
@@ -25,7 +25,7 @@ export class DataInputComponent implements OnInit {
   }
 
   addDataRow(): void {
-    const formArray = this.formGroup?.controls.rows.controls;
+    const formArray: TypedFormArray<DataSpec> | undefined = this.formGroup?.controls.rows;
 
     if (!formArray) {
       return;

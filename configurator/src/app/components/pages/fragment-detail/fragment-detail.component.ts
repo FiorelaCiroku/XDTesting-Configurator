@@ -131,7 +131,6 @@ export class FragmentDetailComponent {
     return this.apiService.listFragmentFiles(this.fragment)
       .pipe(tap((files) => {
         const fileTypes = Object.values(FILE_TYPES);
-        console.log(files);
         this.fragmentFiles = [];
         this.fragmentFiles = files.map(f => {
           const nameChunks = f.name.split('.');

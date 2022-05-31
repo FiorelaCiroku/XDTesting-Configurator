@@ -58,8 +58,7 @@ export class CreateFragmentComponent {
         this.errorMsg = result.message;
         this.showAlert = true;
       })
-      .catch(err => {
-        console.log(err);
+      .catch(() => {
         this.errorMsg = 'Error during fragment save';
         this.showAlert = true;
       });

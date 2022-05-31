@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services';
 import {
@@ -50,8 +50,10 @@ export class TestCrudComponent implements OnDestroy {
   savedTest?: TestDetail;
   showAlert = false;
   saveErrorMsg?: string;
-  rows: string[] = [''];
   testTypes = TEST_TYPE_DEFINITIONS;
+
+
+  @ViewChild('alert', {read: ElementRef}) alert!: ElementRef<HTMLElement>;
 
 
   private _fragmentsSub?: Subscription;
@@ -92,34 +94,14 @@ export class TestCrudComponent implements OnDestroy {
   }
 
   onTypeSelect(): void {
-    const expectedResultsControls = this.fg.controls.expectedResults.controls;
-
     this.queryFg = this._initQueryFgs();
     this.dataFgs = this._initDataFgs();
 
-    if (this.fg.controls.type.value !== 'ERROR_PROVOCATION') {
-      expectedResultsControls.file.enable();
-      expectedResultsControls.fileName.enable();
-      return;
-    }
-
-    expectedResultsControls.file.disable();
-    expectedResultsControls.file.reset();
-
-    expectedResultsControls.fileName.disable();
-    expectedResultsControls.fileName.reset();
-
-
-    // noinspection UnnecessaryLocalVariableJS
-    const arrayControls = this.fg.controls.dataContent.controls.rows.controls;
-
-    for (const row of arrayControls || []) {
-      const fgControls = row?.controls || {};
-
-      if (fgControls.expectedResult) {
-        fgControls.expectedResult.patchValue(false);
-      }
-    }
+    const topControls = this.fg.controls;
+    topControls.query.reset();
+    topControls.data.reset();
+    topControls.expectedResults.reset();
+    topControls.dataContent.reset();
   }
 
   resetDataAndExpectedResults(): void {
@@ -156,9 +138,29 @@ export class TestCrudComponent implements OnDestroy {
       return;
     }
 
+    this.saveErrorMsg = undefined;
+
     if (!this.fg.valid) {
       markAllAsTouchedOrDirty(this.fg);
       markAllAsTouchedOrDirty(this.fg, true);
+      this.saveErrorMsg = 'Missing required fields';
+      this.showAlert = true;
+      this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      return;
+    }
+
+    const errored = this._checkRequired();
+
+    if ((Array.isArray(errored) && errored.length > 0) || errored === false) {
+      if ((Array.isArray(errored) && errored.length > 0)) {
+        this.saveErrorMsg = `Missing Required field${errored.length === 1 ? '' : 's'} "${errored.join('", "')}"`;
+      } else if (errored === false) {
+        this.saveErrorMsg = 'Error during save';
+      }
+
+      this.showAlert = true;
+      this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
 
@@ -317,20 +319,21 @@ export class TestCrudComponent implements OnDestroy {
     this.dataFgs = this._initDataFgs();
   }
 
-  private _initQueryFgs(): FileInputFormGroupSpec[] {
-    const type: TestType = this.fg.controls.type.value;
-    let label = 'Query';
-    const placeholder = 'SELECT DISTINCT ?Concept WHERE {[] a ?Concept} ';
-
+  private static _getQueryLabel(type: TestType): string {
     switch (type) {
       case 'COMPETENCY_QUESTION':
-        label = 'SELECT SPARQL Query';
-        break;
+        return 'SELECT SPARQL Query';
 
       case 'INFERENCE_VERIFICATION':
-        label = 'ASK SPARQL Query';
-        break;
+        return 'ASK SPARQL Query';
     }
+
+    return 'Query';
+  }
+
+  private _initQueryFgs(): FileInputFormGroupSpec[] {
+    const label = TestCrudComponent._getQueryLabel(this.fg.controls.type.value);
+    const placeholder = 'SELECT DISTINCT ?Concept WHERE {[] a ?Concept}';
 
     return [{
       label,
@@ -346,14 +349,64 @@ export class TestCrudComponent implements OnDestroy {
       formGroup: this.fg.controls.data
     }];
 
-    if (type !== 'ERROR_PROVOCATION') {
+    if (type === 'COMPETENCY_QUESTION') {
       result.push({
         label: 'Expected results',
         formGroup: this.fg.controls.expectedResults
       });
     }
 
-    console.log(type, result);
     return result;
+  }
+
+  private _checkRequired(): string[] | boolean {
+    if (!this.fg.value) {
+      return false;
+    }
+
+    const errors: string[] = [];
+    const {type, query, data, expectedResults, dataContent} = this.fg.value;
+    const filledDataRows = (dataContent.rows || []).filter(r => !!r.subject && !!r.predicate && !!r.object);
+    const countExpectedResults = filledDataRows.filter(r => r.expectedResult).length;
+    const countDataRows = filledDataRows.length;
+
+
+    switch (type) {
+      case 'INFERENCE_VERIFICATION':
+        if (!query.file?.length && !query.content && !query.fileName) {
+          errors.push(TestCrudComponent._getQueryLabel(type));
+        }
+
+        if (!data.file?.length && !data.fileName && countDataRows <= 0) {
+          errors.push('Sample dataset');
+        }
+
+        return [];
+
+      case 'ERROR_PROVOCATION':
+        if (!data.file?.length && !data.fileName && countDataRows <= 0) {
+          return ['Sample dataset with errors'];
+        }
+
+        return [];
+
+      case 'COMPETENCY_QUESTION':
+        if (!query.file?.length && !query.content && !query.fileName) {
+          errors.push(TestCrudComponent._getQueryLabel(type));
+        }
+
+        if (!data.file?.length && !data.fileName && countDataRows <= 0) {
+          errors.push('Sample dataset');
+        }
+
+        if (!expectedResults.file?.length && !expectedResults.fileName && countExpectedResults <= 0) {
+          errors.push('Expected results');
+        }
+
+        return errors;
+
+      default:
+        return false;
+    }
   }
 }

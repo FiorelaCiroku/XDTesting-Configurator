@@ -17,7 +17,7 @@ export class TypedFormArray<T = never> extends FormArray implements TypedAbstrac
     return super.at(index);
   }
 
-  override push(control: TypedAbstractControl<T>, options?: { emitEvent?: boolean; }): void {
+  override push(control: TypedControl<T>, options?: { emitEvent?: boolean; }): void {
     super.push(control, options);
   }
 

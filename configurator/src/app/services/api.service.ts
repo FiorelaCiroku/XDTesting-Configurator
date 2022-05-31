@@ -299,8 +299,6 @@ export class ApiService {
       .pipe(switchMap(([fileContent, fileList]) => {
         const isPresent = fileList.filter(f => f.name === name).length > 0;
 
-        console.log('isPresent');
-
         if (isPresent) {
           const chunks = name.split('.');
           const time = moment().format('YYYYMMDDHHmmssSSS');
