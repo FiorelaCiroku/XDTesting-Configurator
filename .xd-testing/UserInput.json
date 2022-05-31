@@ -1,7 +1,12 @@
 {
   "type": "XD_TESTING",
   "tests": [],
-  "fragments": [],
+  "fragments": [
+    {
+      "name": "Fragment 1",
+      "ontologyName": "Ontology Name"
+    }
+  ],
   "ontologies": [
     {
       "url": "https://raw.githubusercontent.com/MatteoMUni/XDTesting-Configurator/main/.xd-testing/Ontology Name/note_20220531120133337.txt",
