@@ -9,10 +9,7 @@ use Symfony\Component\HttpClient\HttpClient;
 return function (App $app) {
     $app->options('/{routes:.*}', function (Request $request, Response $response) {
         // CORS Pre-Flight OPTIONS Request Handler
-        return $response->withHeader('Access-Control-Allow-Origin', 'http://localhost:4200')
-            ->withHeader('Access-Control-Allow-Headers', '*')
-            ->withHeader('Access-Control-Allow-Credentials', 'true')
-            ->withHeader('Access-Control-Allow-Methods', 'GET,POST,PUT');
+        return $response;
     });
 
     $app->get('/login', function (Request $request, Response $response) {
@@ -31,9 +28,10 @@ return function (App $app) {
     $app->get('/login-callback', function (Request $request, Response $response) {
         $body = $request->getQueryParams();
 
-        if (empty($body['code'])) {
-            return $response->withStatus(302)
-                ->withHeader('Location', 'http://localhost:4200/login?canceled=1');
+	if (empty($body['code'])) {
+	    $response->getBody()->write(json_encode(['error' => 'Missing code']));
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
         }
 
         $code = $body['code'];
@@ -85,18 +83,18 @@ return function (App $app) {
 
         setcookie('GITHUB_TOKEN', $token, httponly: true);
 
-        return $response->withStatus(302)
-            ->withHeader('Location', 'http://localhost:4200/select-repo');
+        return $response->withStatus(200);
     });
 
     $app->get('/is-auth', function (Request $request, Response $response) {
         $cookies = $request->getCookieParams();
         $isAuthenticated = !empty($cookies['GITHUB_TOKEN']);
 
-        $response->getBody()->write(json_encode($isAuthenticated));
+	    if ($isAuthenticated) {
+            return $response->withStatus(200);
+        }
 
-        return $response->withStatus(200)
-            ->withHeader('Content-Type', 'application/json');
+        return $response->withStatus(401);
     });
 
     $app->map(
@@ -109,7 +107,7 @@ return function (App $app) {
                 return $response->withStatus(401, 'Unauthorized');
             }
 
-            [$iv, $token] = explode('.', base64_decode($token));
+            [$iv, $token] = explode('.', base64_decode($cookies['GITHUB_TOKEN']));
             $token = openssl_decrypt(base64_decode($token), 'aes-256-cbc', $_ENV['AES_SECRET'], iv: base64_decode($iv));
 
             if ($token === false) {
