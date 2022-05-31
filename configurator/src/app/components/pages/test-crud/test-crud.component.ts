@@ -30,6 +30,7 @@ import { FILE_TYPES, TEST_TYPE_DEFINITIONS } from '../../../constants';
 import { DialogService } from 'primeng/dynamicdialog';
 import { SelectFileComponent } from '../../modals';
 import { markAllAsTouchedOrDirty } from '../../../utils';
+import { Summary } from '../../shared/summary/summary.component';
 
 
 @Component({
@@ -47,7 +48,7 @@ export class TestCrudComponent implements OnDestroy {
   dataFgs: FileInputFormGroupSpec[];
   queryFg: FileInputFormGroupSpec[];
   saved?: boolean;
-  savedTest?: TestDetail;
+  savedTestSummary?: Summary[];
   showAlert = false;
   saveErrorMsg?: string;
   testTypes = TEST_TYPE_DEFINITIONS;
@@ -244,7 +245,7 @@ export class TestCrudComponent implements OnDestroy {
         this.saved = result.success;
         this.saveErrorMsg = result.message;
         this.showAlert = true;
-        this.savedTest = result.data;
+        this._buildSummary(result.data);
       })
       .catch(err => {
         this.saveErrorMsg = err;
@@ -408,5 +409,60 @@ export class TestCrudComponent implements OnDestroy {
       default:
         return false;
     }
+  }
+
+  private _buildSummary(data?: TestDetail): void {
+    if (!data) {
+      return;
+    }
+
+    const savedTestSummary: Summary[] = [{
+      label: 'ID',
+      data: data.id
+    }, {
+      label: 'Test Case Type',
+      data: TEST_TYPE_DEFINITIONS[data.type].label
+    }, {
+      label: 'Test Case Requirement',
+      data: data.content
+    }];
+
+    if (data.query) {
+      savedTestSummary.push({
+        label: TestCrudComponent._getQueryLabel(data.type),
+        data: data.query
+      });
+    } else if (data.queryFileName) {
+      savedTestSummary.push({
+        label: TestCrudComponent._getQueryLabel(data.type) + ' file name',
+        data: data.queryFileName
+      });
+    }
+
+    if (data.data) {
+      savedTestSummary.push({
+        label: 'Sample dataset' + (data.type === 'ERROR_PROVOCATION' ? ' with errors' : ''),
+        data: data.data
+      });
+    } else if (data.dataFileName) {
+      savedTestSummary.push({
+        label: 'Sample dataset' + (data.type === 'ERROR_PROVOCATION' ? ' with errors' : '') + ' file name',
+        data: data.dataFileName
+      });
+    }
+
+    if (data.expectedResults) {
+      savedTestSummary.push({
+        label: 'Expected results',
+        data: data.expectedResults
+      });
+    } else if (data.expectedResultsFileName) {
+      savedTestSummary.push({
+        label: 'Expected results file name',
+        data: data.expectedResultsFileName
+      });
+    }
+
+    this.savedTestSummary = savedTestSummary;
   }
 }

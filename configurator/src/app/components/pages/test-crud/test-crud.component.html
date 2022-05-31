@@ -67,6 +67,6 @@
 </ng-container>
 
 
-<ng-container *ngIf="saved && savedTest">
-  <config-summary></config-summary>
+<ng-container *ngIf="saved && savedTestSummary">
+  <config-summary [data]="savedTestSummary"></config-summary>
 </ng-container>
