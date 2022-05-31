@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, SimpleChange, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChange, ViewChild } from '@angular/core';
 import { FragmentFile } from '../../../models';
 import { Table } from 'primeng/table';
 
@@ -12,7 +12,8 @@ export class FilesTableComponent implements OnChanges {
   @Input() files: FragmentFile[] = [];
   @Input() loading = false;
   @Input() emptyMessage = 'No data uploaded yet';
-  @Input() filters = false;
+
+  @Output() onRowClicked = new EventEmitter<FragmentFile>();
 
 
   @ViewChild('table', {read: Table}) table?: Table;

@@ -16,10 +16,9 @@ import {
 } from 'rxjs';
 import {
   ApiResult,
-  ContentFile,
   DataSpec,
   EditFragmentTestParams,
-  FileInputFormGroup, FileInputFormGroupSpec, Fragment,
+  FileInputFormGroup, FileInputFormGroupSpec, Fragment, FragmentFile,
   RecursivePartial,
   TestDetail,
   TestDetailForm,
@@ -117,13 +116,13 @@ export class TestCrudComponent implements OnDestroy {
   selectFile(fg: FileInputFormGroupSpec): void {
     const ref = this._dialogService.open(SelectFileComponent, {
       data: {
-        fragmentName: this.fragment?.name
+        fragment: this.fragment
       },
       header: `Select existing ${fg.label.toLowerCase()}`,
       modal: true
     });
 
-    const $sub = ref.onClose.subscribe((file: ContentFile) => {
+    const $sub = ref.onClose.subscribe((file: FragmentFile) => {
       fg.formGroup.patchValue({
         content: '',
         file: undefined,

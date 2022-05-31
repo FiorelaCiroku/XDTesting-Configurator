@@ -1,7 +1,8 @@
 import { Component, OnInit} from '@angular/core';
 import { ApiService } from '../../../services';
-import { ContentFile } from '../../../models';
+import { Fragment, FragmentFile } from '../../../models';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { FILE_TYPES } from '../../../constants';
 
 @Component({
   selector: 'config-select-file',
@@ -11,24 +12,43 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 export class SelectFileComponent implements OnInit {
 
   error?: string;
-  files: ContentFile[] = [];
+  files: FragmentFile[] = [];
   loading = true;
 
   constructor(private _apiService: ApiService, private _ref: DynamicDialogRef, private _config: DynamicDialogConfig) {
   }
 
   ngOnInit(): void {
-    const fragmentName = this._config.data.fragmentName;
+    const fragment: Fragment = this._config.data.fragment;
 
-    const $sub = this._apiService.listFragmentFiles(fragmentName)
+    if (!fragment) {
+      return;
+    }
+
+    const $sub = this._apiService.listFragmentFiles(fragment)
       .subscribe((files) => {
-        this.files = files;
+        const fileTypes = Object.values(FILE_TYPES);
+        this.files = [];
+        this.files = files.map(f => {
+          const nameChunks = f.name.split('.');
+          const extension = nameChunks.splice(-1, 1)[0];
+          const pathChunks = f.path.split('/');
+          const fileType = fileTypes.find(ft => ft.folder === pathChunks[pathChunks.length - 2]);
+
+          return {
+            name: nameChunks.join('.'),
+            extension,
+            type: fileType?.label || ''
+          };
+
+        });
+
         this.loading = false;
         $sub.unsubscribe();
       });
   }
 
-  onFileSelected(file: ContentFile): void {
+  onFileSelected(file: FragmentFile): void {
     this._ref.close(file);
   }
 }

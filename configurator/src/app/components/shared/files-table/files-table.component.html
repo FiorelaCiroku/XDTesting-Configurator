@@ -33,7 +33,7 @@
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-file>
-    <tr>
+    <tr (click)="onRowClicked.emit(file)">
       <td>{{file.name}}</td>
       <td>{{file.extension}}</td>
       <td>{{file.type}}</td>
