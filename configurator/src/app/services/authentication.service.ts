@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, map, Observable, of, switchMap } from 'rxjs';
 import { CanActivate, Router, UrlTree } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { baseUrl } from '../../environments/environment';
@@ -21,7 +21,8 @@ export class AuthenticationService implements CanActivate {
       .pipe(switchMap(isAuth => {
         if (!isAuth) {
           return this.httpClient.get<never>(`${baseUrl}/is-auth`)
-            .pipe(map(() => true));
+            .pipe(map(() => true))
+            .pipe(catchError(() => of(this.loginUrl)));
         }
 
         return of(true);

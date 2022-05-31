@@ -1,6 +1,5 @@
-import { TypedAbstractControl } from './typed-abstract-control';
+import { TypedControl } from './typed-abstract-control';
 
 export type TypedFormGroupModel<T> = {
-  [k in keyof Partial<T>]: TypedAbstractControl<T[k]>
+  [k in keyof T]: TypedControl<T[k]>
 };
-

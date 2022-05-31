@@ -6,14 +6,29 @@ import {
   CreateOrUpdateFileResponse,
   Fragment,
   Repository, ShortBranch,
-  TestDetail, TestingType, WorkflowRunResponse, UserInput
+  TestDetail, WorkflowRunResponse, UserInput, FileTypes, Ontology, OntologyForm
 } from '../models';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, catchError, EMPTY, from, map, Observable, of, switchMap, tap, throwError, zip } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  EMPTY,
+  forkJoin,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+  throwError,
+  zip
+} from 'rxjs';
 import { baseUrl } from '../../environments/environment';
-import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY, TEST_TYPE_DEFINITIONS } from '../constants';
+import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY, TEST_TYPE_DEFINITIONS, FILE_TYPES } from '../constants';
 import { Router } from '@angular/router';
 import * as moment from 'moment';
+import { encode } from 'js-base64';
+import { filterNullUndefined } from '../utils';
 
 
 @Injectable({
@@ -95,11 +110,12 @@ export class ApiService {
       }));
   }
 
-  listFiles(fragmentName?: string): Observable<ContentFile[]> {
-    const url = ApiService.getUrl('/repos/{repo}/contents/.xd-testing' + (fragmentName ? `/${fragmentName}` : ''));
+  listFiles(path?: string): Observable<ContentFile[]> {
+    const listUrl = `/repos/{repo}/contents/${path || ''}`;
+    const url = ApiService.getUrl(listUrl);
 
     if (!url) {
-      return EMPTY;
+      return throwError(() => 'Error building URL. Repository or branch undefined');
     }
 
     return this._http.get<ContentFile[]>(url)
@@ -109,6 +125,26 @@ export class ApiService {
         }
 
         return throwError(() => err);
+      }));
+  }
+
+  listFragmentFiles(fragment?: Fragment): Observable<ContentFile[]> {
+    if (!fragment) {
+      return throwError(() => 'Empty fragment name');
+    }
+
+    const baseFragmentUrl = `.xd-testing/${fragment.ontologyName}/${fragment.name}`;
+    const urls = Object.values(FILE_TYPES).map(ft => baseFragmentUrl + '/' + ft.folder)
+      .filter(filterNullUndefined)
+      .filter(u => !!u);
+
+    if (!urls.length) {
+      return throwError(() => 'Error retrieving files');
+    }
+
+    return forkJoin(urls.map(url => this.listFiles(url)))
+      .pipe(map((results: ContentFile[][]): ContentFile[] => {
+        return results.flat();
       }));
   }
 
@@ -131,23 +167,6 @@ export class ApiService {
       .pipe(catchError(() => of(this.workflowRuns || defaultResponse)));
   }
 
-  getTestingType(repository: string, branch: string): Observable<TestingType | undefined> {
-    const headers = ApiService.getDefaultHeaders(this.userInputEtag);
-    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`, repository, branch);
-
-    if (!url) {
-      return EMPTY;
-    }
-
-    return this._http.get<ContentFile>(url,{ observe: 'response', headers})
-      .pipe(map(res => {
-        this.userInput = this._parseUserInput(res);
-        return this.userInput.type;
-      }))
-      .pipe(catchError(() => of(this.userInput?.type)));
-
-  }
-
   getFragments(): Observable<Fragment[]> {
     const headers = ApiService.getDefaultHeaders(this.userInputEtag);
     const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
@@ -166,24 +185,6 @@ export class ApiService {
       }));
   }
 
-  getTests(): Observable<TestDetail[]> {
-    const headers = ApiService.getDefaultHeaders(this.userInputEtag);
-    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
-
-    if (!url) {
-      return EMPTY;
-    }
-
-    return this._http.get<ContentFile>(url, {observe: 'response', headers})
-      .pipe(map(res => {
-        this.userInput = this._parseUserInput(res);
-        return this.userInput.tests || [];
-      }))
-      .pipe(catchError(() => {
-        return of(this.userInput?.tests || []);
-      }));
-  }
-
   getFragment(name: string): Observable<Fragment> {
     return this.getFragments()
       .pipe(map(fragments => {
@@ -193,19 +194,6 @@ export class ApiService {
           throw `No fragments found with name ${name}`;
         } else {
           return filteredFragments[0];
-        }
-      }));
-  }
-
-  getTest(id: string): Observable<TestDetail> {
-    return this.getTests()
-      .pipe(map(tests => {
-        const filteredTests = tests.filter(f => f.id === id);
-
-        if (filteredTests.length === 0) {
-          throw `No tests found with id ${id}`;
-        } else {
-          return filteredTests[0];
         }
       }));
   }
@@ -225,31 +213,6 @@ export class ApiService {
       .pipe(map(() => ({success: true})))
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.error});
-      }));
-  }
-
-  updateTestingType(repo: string, branch: string, testingType: TestingType): Observable<ApiResult> {
-    return this.getTestingType(repo, branch)
-      .pipe(switchMap((type): Observable<ApiResult> => {
-        if (type === testingType) {
-          return of({success: true});
-        }
-
-        const content: UserInput = {
-          ...(this.userInput || {}),
-          type: testingType
-        };
-
-        return this._updateUserInput(
-          JSON.stringify(content, null, 4),
-          'Updated testing type',
-          this.userInputSha
-        )
-          .pipe(map(() => ({success: true}) ));
-
-      }))
-      .pipe(catchError((err) => {
-        return of({success: false, err: err.message});
       }));
   }
 
@@ -325,89 +288,43 @@ export class ApiService {
       }));
   }
 
-  updateTest(testDetail: Omit<TestDetail, 'id'>, testId?: string): Observable<ApiResult<TestDetail>> {
-    return this.getTests()
-      .pipe(switchMap(tests => {
-        let newTest: TestDetail;
-        let message: string;
+  uploadFile(dataFile?: File, type?: FileTypes, fragment?: Fragment): Observable<ApiResult<string>> {
+    if (!dataFile) {
+      return of({success: true});
+    }
 
-        if (!testId) {
-          const prefix = TEST_TYPE_DEFINITIONS[testDetail.type].idPrefix;
-          const re = new RegExp(`^${prefix}`);
-          let lastId = 0;
-
-          for (const test of tests) {
-            if (!test.id.startsWith(prefix)) {
-              continue;
-            }
-
-            const temp = parseInt(test.id.replace(re, ''), 10);
-            if (test.type === testDetail.type && temp > lastId) {
-              lastId = temp;
-            }
-          }
-
-          const newId = prefix + (lastId + 1).toString().padStart(3, '0');
-          newTest = {...testDetail, id: newId};
-          tests.push(newTest);
-          message = `Added test ${newId}`;
-        }
-        else {
-          let index: number | undefined;
-
-          for (let i = 0; i < tests.length; i++) {
-            const test = tests[i];
-            if (test.type === testDetail.type && test.id === testId) {
-              index = i;
-              break;
-            }
-          }
-
-          if (index === undefined) {
-            return throwError(() => 'Test id not found');
-          }
-
-          const oldTest = tests[index];
-          newTest = {...testDetail, id: oldTest.id};
-          tests.splice(index, 1, newTest);
-          message = `Updated tests ${oldTest.id}`;
-        }
-
-        return this._updateTests(tests, message,  this.userInputSha)
-          .pipe(map(() => newTest));
-      }))
-
-      .pipe(map((data): ApiResult<TestDetail> => ({success: true, data}) ))
-      .pipe(catchError((err: HttpErrorResponse) => {
-        return of({success: false, message: err.error});
-      }));
-  }
-
-  uploadFile(dataFile: File, fragment?: string): Observable<ApiResult<string>> {
     let name = dataFile.name;
 
-    return zip(from(dataFile.text()), this.listFiles(fragment))
+    return zip(from(dataFile.text()), this.listFragmentFiles(fragment))
       .pipe(switchMap(([fileContent, fileList]) => {
         const isPresent = fileList.filter(f => f.name === name).length > 0;
 
+        console.log('isPresent');
 
         if (isPresent) {
           const chunks = name.split('.');
           const time = moment().format('YYYYMMDDHHmmssSSS');
 
           if (chunks.length > 1) {
-            name = chunks.slice(0, -1).join('.') + '_' + time + chunks[chunks.length - 1];
+            name = chunks.slice(0, -1).join('.') + '_' + time + '.' + chunks[chunks.length - 1];
           } else {
             name = name + '_' + time;
           }
         }
 
         const body: CreateOrUpdateFile = {
-          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment}` : ''),
-          content: btoa(fileContent),
+          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''),
+          content: encode(fileContent),
         };
 
-        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}` + (fragment ? `/${fragment}` : '') + `/${name}`);
+        const subfolder = type ? FILE_TYPES[type].folder : null;
+
+        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/` +
+          (fragment ? `${fragment.ontologyName}/${fragment.name}` : '') +
+          '/' +
+          (subfolder ? `${subfolder}/${name}` : name)
+        );
+
         if (!url) {
           return EMPTY;
         }
@@ -455,24 +372,6 @@ export class ApiService {
       }));
   }
 
-  deleteTest(testId: string): Observable<ApiResult> {
-    return this.getTests()
-      .pipe(switchMap((tests) => {
-        tests = tests.filter(t => t.id !== testId);
-
-        return this._updateTests(tests, `Removed test ${testId}`, this.userInputSha);
-      }))
-      .pipe(map(() => ({success: true})))
-      .pipe(catchError((err: HttpErrorResponse): Observable<ApiResult> => {
-        return of({
-          success: false,
-          message: err.message
-        });
-      }));
-  }
-
-
-
   private _updateUserInput(content: string, message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
     const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
 
@@ -482,7 +381,7 @@ export class ApiService {
 
     const body: CreateOrUpdateFile = {
       message,
-      content: btoa(content),
+      content: encode(content),
     };
 
     if (sha) {
@@ -494,22 +393,8 @@ export class ApiService {
 
   private _updateFragments(fragments: Fragment[], message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
     const content = {
-      ...this.userInput || { type: 'XD_TESTING' },
+      ...this.userInput || {},
       fragments
-    };
-
-    return this._updateUserInput(JSON.stringify(content, null, 2), message, sha)
-      .pipe(tap((res) => {
-        this.userInputSha = res.content?.sha;
-        this.userInputEtag = `"${res.content?.sha}"`;
-        this.userInput = content;
-      }));
-  }
-
-  private _updateTests(tests: TestDetail[], message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
-    const content = {
-      ...this.userInput || { type: 'STANDARD' },
-      tests
     };
 
     return this._updateUserInput(JSON.stringify(content, null, 2), message, sha)
@@ -524,7 +409,7 @@ export class ApiService {
     this.userInputEtag = res.headers.get('etag')?.replace('W/', '') || '';
 
     const body = res.body;
-    const defaultUserInput: UserInput = {type: 'XD_TESTING', fragments: [], tests: []};
+    const defaultUserInput: UserInput = { fragments: [] };
 
     if (!body) {
       return defaultUserInput;
@@ -538,5 +423,150 @@ export class ApiService {
     }
 
     return JSON.parse(fileContent) as UserInput;
+  }
+
+  getFragmentTest(fragmentName: string, testId: string): Observable<TestDetail> {
+    return this.getFragment(fragmentName)
+      .pipe(switchMap((res): Observable<TestDetail> => {
+        const test = res.tests?.find(t => t.id === testId);
+
+        if (!test) {
+          return throwError(() => 'No test found with id ' + testId);
+        }
+
+        return of(test);
+      }));
+  }
+
+  listOntologies(): Observable<Ontology[]> {
+    const headers = ApiService.getDefaultHeaders(this.userInputEtag);
+    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
+
+    if (!url) {
+      return throwError(() => 'Repository or branch not selected');
+    }
+
+    return this._http.get<ContentFile>(url, {observe: 'response', headers})
+      .pipe(map(res => {
+        this.userInput = this._parseUserInput(res);
+        return this.userInput.ontologies || [];
+      }))
+      .pipe(catchError(() => {
+        return of(this.userInput?.ontologies || []);
+      }));
+  }
+
+  uploadOntology(ontology: OntologyForm): Observable<ApiResult> {
+    if (!ontology.file?.length && !ontology.url) {
+      return throwError(() => 'Neither file nor URL provided');
+    }
+
+    let $uploadSrc: Observable<ApiResult<string>> = of({success: true});
+
+
+    if (ontology.file?.length) {
+      let name = ontology.file[0].name;
+      const $content = from(ontology.file[0].text());
+
+      $uploadSrc = zip($content, this.listOntologies(), this.listFiles(`${this.baseDir}/ontologies`))
+        .pipe(switchMap(([fileContent, ontologies, fileList]: [string, Ontology[], ContentFile[]]) => {
+          const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
+
+          if (alreadyDefined?.length) {
+            return throwError(() => `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`);
+          }
+
+          const isPresent = fileList.filter(f => f.name === name).length > 0;
+
+          if (isPresent) {
+            const chunks = name.split('.');
+            const time = moment().format('YYYYMMDDHHmmssSSS');
+
+            if (chunks.length > 1) {
+              name = chunks.slice(0, -1).join('.') + '_' + time + '.' + chunks[chunks.length - 1];
+            } else {
+              name = name + '_' + time;
+            }
+          }
+
+          const body: CreateOrUpdateFile = {
+            message: `Uploaded ontology ${name}`,
+            content: encode(fileContent),
+          };
+
+          const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/${ontology.name}/${name}`);
+
+          if (!url) {
+            return throwError(() => 'Repository or branch not selected');
+          }
+
+          return this._http.put(url, body);
+        }))
+        .pipe(map(() => {
+          const repo = localStorage.getItem(SELECTED_REPO_KEY);
+          const branch = localStorage.getItem(SELECTED_BRANCH_KEY);
+          const url = `https://raw.githubusercontent.com/${repo}/${branch}/${this.baseDir}/${ontology.name}/${name}`;
+
+          return { success: true, data: url };
+        }));
+
+    } else if (ontology.url) {
+      $uploadSrc = this.listOntologies()
+        .pipe(switchMap((ontologies) => {
+          const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
+
+          if (alreadyDefined?.length) {
+            return throwError(() => `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`);
+          }
+
+          return of({success: true, data: ontology.url});
+        }));
+    }
+
+    return $uploadSrc.pipe(switchMap((apiResult) => {
+
+      const ontologies = this.userInput?.ontologies || [];
+
+      if (!apiResult.data) {
+        return throwError(() => 'Application error during save. URL not defined');
+      }
+
+      ontologies.push({
+        url: apiResult.data,
+        name: ontology.name
+      });
+
+      const userInput: UserInput = {
+        ...this.userInput || {},
+        ontologies
+      };
+
+      return this._updateUserInput(
+        JSON.stringify(userInput, null, 2),
+        `Added ontology ${apiResult.data} to UserInput.json`,
+        this.userInputSha
+      );
+    }))
+      .pipe(map((): ApiResult => ({ success: true })))
+      .pipe(catchError((err): Observable<ApiResult> => of({success: false, message: err })));
+  }
+
+  deleteOntology(name: string): Observable<ApiResult> {
+    return this.listOntologies()
+      .pipe(switchMap(ontologies => {
+        ontologies = ontologies.filter(o => o.name !== name);
+        const fragments = (this.userInput?.fragments || []).filter(f => f.ontologyName !== name);
+
+        const userInput: UserInput = {
+          fragments,
+          ontologies
+        };
+
+        return this._updateUserInput(JSON.stringify(userInput, null, 2), `Removed ontology ${name}`, this.userInputSha);
+      }))
+      .pipe(map(() => ({success: true})))
+      .pipe(catchError((err: HttpErrorResponse) => {
+        return of({success: false, message: err.message});
+      }));
   }
 }

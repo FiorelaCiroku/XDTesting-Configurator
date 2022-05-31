@@ -1,0 +1,51 @@
+<div class="alert alert-danger" *ngIf="error">
+  {{ error }}
+</div>
+
+<strong class="d-block mb-3">Select the repository and the branch to work on</strong>
+
+<div class="mb-3">
+  <div class="form-label">Repository</div>
+
+  <div class="select-with-loader">
+    <div *ngIf="loading && (!selectedRepo || selectedBranch)" class="loader-wrapper">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    <select class="form-select" required configValidationFeedback [disabled]="loading" [(ngModel)]="selectedRepo"
+            (ngModelChange)="onRepositorySelection()">
+      <option [ngValue]="undefined"></option>
+      <ng-container *ngFor="let repo of repos">
+        <option *ngIf="!repo.archived" [ngValue]="repo.full_name">
+          {{ repo.full_name }}
+        </option>
+      </ng-container>
+    </select>
+  </div>
+</div>
+
+
+<div class="mb-3">
+  <div class="form-label">Branch</div>
+
+  <div class="select-with-loader">
+    <div *ngIf="loading && selectedBranch" class="loader-wrapper">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    <select class="form-select" required configValidationFeedback [disabled]="!selectedRepo || loading" [(ngModel)]="selectedBranch">
+      <option [ngValue]="undefined"></option>
+      <ng-container *ngFor="let branch of branches;">
+        <option *ngIf="!branch.protected" [ngValue]="branch.name">
+          {{ branch.name }}
+        </option>
+      </ng-container>
+    </select>
+  </div>
+</div>
+
+<div class="mt-5 mb-2 text-end">
+  <button class="btn btn-primary w-100 w-sm-auto" (click)="saveRepository()">Save</button>
+</div>

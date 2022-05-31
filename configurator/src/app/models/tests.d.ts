@@ -1,4 +1,4 @@
-export type TestingType = 'XD_TESTING' | 'STANDARD';
+import { FileInputFormGroup } from './file-input';
 
 export interface TestDetail {
   id: string;
@@ -12,17 +12,19 @@ export interface TestDetail {
   expectedResultsFileName?: string;
 }
 
-export interface TestDetailForm extends Omit<TestDetail, 'data'> {
-  queryFile?: FileList;
-  dataFile?: FileList;
-  expectedResultsFile?: FileList;
-  data?: {
+export interface TestDetailForm {
+  type: TestType;
+  content: string;
+  query: FileInputFormGroup;
+  data: FileInputFormGroup;
+  expectedResults: FileInputFormGroup;
+  dataContent: {
     prefixes: string;
     rows: DataSpec[]
   };
 }
 
-export interface DataSpec {
+export interface DataSpec extends Record<string, unknown> {
   expectedResult: boolean,
   subject: string;
   predicate: string;
@@ -31,7 +33,7 @@ export interface DataSpec {
 }
 
 
-export type TestType = 'GENERAL_CONSTRAINT' | 'COMPETENCY_QUESTION' | 'ERROR_PROVOCATION';
+export type TestType = 'INFERENCE_VERIFICATION' | 'COMPETENCY_QUESTION' | 'ERROR_PROVOCATION';
 export interface TestTypeDefinition {
   label: string;
   idPrefix: string;

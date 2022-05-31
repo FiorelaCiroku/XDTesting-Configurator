@@ -1,0 +1,51 @@
+<config-alert [type]="errorMsg ? 'danger' : 'success'" [(isOpen)]="showAlert">
+  <ng-container *ngIf="errorMsg">
+    {{ errorMsg }}
+  </ng-container>
+
+  <ng-container *ngIf="successMsg">
+    {{successMsg}}
+  </ng-container>
+</config-alert>
+
+<div class="d-flex align-items-center mb-2">
+  <p-inputSwitch [(ngModel)]="uploadOntology" (ngModelChange)="onToggle()"></p-inputSwitch>
+  <span class="ms-2">Upload new ontology</span>
+</div>
+
+<ng-container [formGroup]="formGroup">
+  <div class="mb-3">
+    <label for="name" class="form-label">Name</label>
+    <input id="name" type="text" formControlName="name" class="form-control" configValidationFeedback required />
+  </div>
+
+  <div *ngIf="uploadOntology">
+    <label for="file" class="mb-1 form-label">File</label>
+    <input formControlName="file"
+           class="form-control"
+           configFileInput
+           configValidationFeedback
+           id="file"
+           [required]="uploadOntology"
+           type="file">
+  </div>
+
+  <div *ngIf="!uploadOntology">
+    <label for="fileUrl" class="mb-1 form-label">File URL</label>
+    <input formControlName="url"
+           class="form-control"
+           configValidationFeedback
+           id="fileUrl"
+           [required]="uploadOntology"
+           placeholder="https://raw.githubusercontent.com/username/repository/branch/path/to/file"
+           type="url">
+  </div>
+
+
+  <div class="mt-5 mb-2 text-end">
+    <button class="btn btn-primary w-100 w-sm-auto" [disabled]="uploading" (click)="upload()">
+      <span *ngIf="uploading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      Save
+    </button>
+  </div>
+</ng-container>

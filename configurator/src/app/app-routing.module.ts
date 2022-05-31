@@ -1,19 +1,21 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthenticationService } from './services';
 import {
   ActionsComponent,
   CreateFragmentComponent,
-  FragmentDetailComponent,
-  EditFragmentTestComponent,
-  FragmentListComponent, LoginComponent, LayoutComponent, TestListComponent, CreateTestComponent
-} from './components';
-import { AuthenticationService, TestingTypeGuardService } from './services';
+  TestCrudComponent, FragmentDetailComponent,
+  FragmentListComponent,
+  LoginComponent
+} from './components/pages';
+import { LayoutComponent } from './components';
+import { OntologyListComponent } from './components/pages/ontology-list/ontology-list.component';
 
 const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'fragments'
+    redirectTo: 'ontologies'
   },
   {
     path: 'login',
@@ -35,8 +37,11 @@ const routes: Routes = [
         component: ActionsComponent
       },
       {
+        path: 'ontologies',
+        component: OntologyListComponent
+      },
+      {
         path: 'fragments',
-        canActivate: [TestingTypeGuardService],
         children: [
           {
             path: '',
@@ -53,31 +58,13 @@ const routes: Routes = [
           },
           {
             path: ':fragmentName/create-test',
-            component: EditFragmentTestComponent
+            component: TestCrudComponent
           },
           {
             path: ':fragmentName/edit-test/:testId',
-            component: EditFragmentTestComponent
+            component: TestCrudComponent
           },
         ],
-      },
-      {
-        path: 'tests',
-        canActivate: [TestingTypeGuardService],
-        children: [
-          {
-            path: '',
-            component: TestListComponent
-          },
-          {
-            path: 'create',
-            component: CreateTestComponent
-          },
-          {
-            path: 'edit/:testId',
-            component: CreateTestComponent
-          }
-        ]
       }
     ]
   }

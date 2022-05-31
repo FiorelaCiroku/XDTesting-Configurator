@@ -6,3 +6,9 @@ export interface Fragment {
   tests?: TestDetail[];
 }
 
+export interface FragmentFile {
+  name: string;
+  extension?: string;
+  type: string;
+}
+

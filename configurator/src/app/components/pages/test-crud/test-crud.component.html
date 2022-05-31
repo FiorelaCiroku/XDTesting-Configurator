@@ -1,0 +1,72 @@
+<ng-container *ngIf="initErrorMsg">
+  <div class="alert alert-danger">
+    <span *ngIf="initErrorMsg">{{initErrorMsg}}</span>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="!initErrorMsg && !saved && fragment">
+  <h1 class="mb-0">{{ test ? 'Edit' : 'Create'}} Test {{ test ? test.id : '' }}</h1>
+  <h4 class="mb-5">{{fragment?.name}}</h4>
+</ng-container>
+
+<config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert">
+  <ng-container *ngIf="saved">
+    Fragment successfully saved
+    <br>
+    <a [routerLink]="test ? '../..' : '..'" class="btn btn-link p-0 text-decoration-none">
+      <i class="fa-solid fa-angle-left"></i>
+      Back
+    </a>
+  </ng-container>
+  <ng-container *ngIf="!saved">
+    Error during fragment save: {{ saveErrorMsg }}
+  </ng-container>
+</config-alert>
+
+<ng-container  *ngIf="!initErrorMsg && !saved && fragment">
+  <form [formGroup]="fg" (submit)="save()" novalidate>
+    <h5 class="font-weight-bold">Details</h5>
+
+    <div class="mb-3">
+      <label for="test-type" class="form-label">Type</label>
+      <select id="test-type" class="form-select" configValidationFeedback formControlName="type" required (change)="onTypeSelect()">
+        <option [value]="null"></option>
+        <option *ngFor="let testType of testTypes | keyvalue" [value]="testType.key">{{ testType.value.label }}</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="content" class="form-label">Requirement</label>
+      <textarea id="content" class="form-control" formControlName="content" configValidationFeedback required></textarea>
+    </div>
+
+
+    <config-file-input [formGroups]="queryFg" (onShowExistingFiles)="selectFile($event)"></config-file-input>
+
+
+
+    <h5 class="font-weight-bold mt-5 mb-3">Data</h5>
+
+    <config-file-input [formGroups]="dataFgs" [showDefaultInput]="false" (onShowExistingFiles)="selectFile($event)"
+                       (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults()">
+      <config-data-input [withExpectedResults]="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'"
+                         [formGroup]="fg.controls.dataContent"></config-data-input>
+    </config-file-input>
+
+
+    <div class="text-end my-4">
+      <a [routerLink]="test ? '../..' : '..'" class="btn btn-secondary w-100 w-sm-auto mb-1 mb-sm-0 me-0 me-sm-1">
+        Cancel
+      </a>
+
+      <button type="submit" class="btn btn-primary w-100 w-sm-auto ">
+        Save
+      </button>
+    </div>
+  </form>
+</ng-container>
+
+
+<ng-container *ngIf="saved && savedTest">
+  <config-summary></config-summary>
+</ng-container>

@@ -1,8 +1,7 @@
-import { TestDetail, TestingType } from './tests';
 import { Fragment } from './fragments';
+import { Ontology } from './ontology';
 
 export interface UserInput {
-  type: TestingType;
-  tests?: TestDetail[];
+  ontologies?: Ontology[];
   fragments?: Fragment[];
 }

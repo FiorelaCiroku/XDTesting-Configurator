@@ -1,0 +1,60 @@
+<ng-container *ngIf="formGroup" [formGroup]="formGroup">
+  <div class="mt-3 mb-5">
+    <label for="prefixes" class="form-label">Prefixes</label>
+    <textarea class="form-control code-input" formControlName="prefixes" id="prefixes"
+              configValidationFeedback></textarea>
+  </div>
+
+  <div class="text-end mb-2">
+    <button type="button" class="btn btn-primary" (click)="addDataRow()">
+      <i class="fa-solid fa-plus"></i>
+      &nbsp;
+      Add row
+    </button>
+  </div>
+
+  <ng-container formArrayName="rows">
+    <p-table [value]="rows" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th></th>
+          <th class="text-center" *ngIf="withExpectedResults">
+            Expected result
+          </th>
+          <th>Subject</th>
+          <th>Predicate</th>
+          <th>Object</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row let-i="rowIndex">
+        <tr [formGroup]="row">
+          <td class="text-center">
+            <button class="btn" (click)="removeDataRow(i)">
+              <i class="text-danger fa-solid fa-minus-circle"></i>
+            </button>
+          </td>
+          <td class="text-center" *ngIf="withExpectedResults">
+            <p-checkbox [formControl]="row.controls.expectedResult" [binary]="true"></p-checkbox>
+          </td>
+          <td>
+            <input type="text" formControlName="subject" class="form-control">
+          </td>
+          <td>
+            <input type="text" formControlName="predicate" class="form-control">
+          </td>
+          <td>
+            <input type="text" formControlName="object" class="form-control">
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td class="text-center" [attr.colspan]="withExpectedResults ? 4 : 5">
+            No data defined
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </ng-container>
+</ng-container>

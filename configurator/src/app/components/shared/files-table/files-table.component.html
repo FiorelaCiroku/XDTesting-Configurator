@@ -1,0 +1,49 @@
+<p-table *ngIf="files" [value]="files" responsiveLayout="scroll" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5,10,20]"
+         [loading]="loading" [globalFilterFields]="['name','extension','type']" #table>
+  <ng-template pTemplate="caption">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <button class="btn btn-primary d-block d-md-inline-block w-100 w-md-auto" (click)="clear(table)">
+        <i class="fa-solid fa-filter-circle-xmark"></i>
+        &nbsp;
+        Clear filter
+      </button>
+      <span class="p-input-icon-left w-100 w-md-auto">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" class="w-100 w-md-auto" (input)="filterContent($event)" placeholder="Search keyword" />
+      </span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="header">
+    <tr>
+      <th>
+        Name
+      </th>
+      <th>
+        <div class="d-flex justify-content-start align-items-center">
+          Extension
+          <p-columnFilter type="text" field="extension" display="menu" class="ms-2"></p-columnFilter>
+        </div>
+      </th>
+      <th>
+        <div class="d-flex justify-content-start align-items-center">
+          Type
+          <p-columnFilter type="text" field="type" display="menu" class="ms-2"></p-columnFilter>
+        </div>
+      </th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-file>
+    <tr>
+      <td>{{file.name}}</td>
+      <td>{{file.extension}}</td>
+      <td>{{file.type}}</td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td class="text-center" colspan="3">
+        {{ emptyMessage }}
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

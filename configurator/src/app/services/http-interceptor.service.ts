@@ -6,7 +6,7 @@ import {
   HttpInterceptor,
   HttpRequest
 } from '@angular/common/http';
-import { catchError, EMPTY, Observable, throwError } from 'rxjs';
+import { catchError, EMPTY, finalize, Observable, throwError } from 'rxjs';
 import { AuthenticationService } from './authentication.service';
 import { Router } from '@angular/router';
 import { ApiService } from './api.service';
@@ -23,15 +23,33 @@ export class HttpInterceptorService implements HttpInterceptor {
       withCredentials: true
     });
 
+    const reqUrl = req.url;
+    this._setLoading(reqUrl, true);
+
+
     return next.handle(req)
+      .pipe(finalize(() => {
+        console.log('finalize');
+        this._setLoading(reqUrl, false);
+      }))
       .pipe(catchError((err: HttpErrorResponse) => {
         if (err.status === 401) {
-          this.authservice.$isAuthenticated.next(false);
+          this._setLoading(reqUrl, false);
           this.router.navigate([this.authservice.loginUrl.toString()]);
           return EMPTY;
         }
 
         return throwError(() => err);
       }));
+  }
+
+  private _setLoading(reqUrl: string, loading: boolean): void {
+    if (!reqUrl.endsWith('is-auth')) {
+      console.log('set loading', loading);
+      this.apiService.$loading.next(loading);
+      return;
+    }
+
+    console.log('discarded set loading', loading);
   }
 }

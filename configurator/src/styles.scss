@@ -46,7 +46,7 @@
 }
 
 .p-datatable {
-  @include media-breakpoint-up('sm') {
+  @include media-breakpoint-up('md') {
     // 100vw - (sidebar width + container padding)
     max-width: calc(100vw - 324px);
   }

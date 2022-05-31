@@ -1,13 +1,13 @@
 import { AbstractControlOptions, AsyncValidatorFn, FormArray, ValidatorFn } from '@angular/forms';
-import { TypedAbstractControl, ControlResetObject, ControlResetValue } from '../../models/typed-form';
+import { TypedAbstractControl, ControlResetObject, ControlResetValue, TypedControl } from '../../models/typed-form';
 import { Observable } from 'rxjs';
 
-export class TypedFormArray<T = unknown> extends FormArray implements TypedAbstractControl<T[]> {
+export class TypedFormArray<T = never> extends FormArray implements TypedAbstractControl<T[]> {
 
   override readonly value!: T | null;
   override readonly valueChanges!: Observable<T | null | undefined>;
 
-  constructor(override controls: TypedAbstractControl<T>[],
+  constructor(override controls: TypedControl<T>[],
               validatorOrOpts?: ValidatorFn | ValidatorFn[] | AbstractControlOptions | null,
               asyncValidator?: AsyncValidatorFn | AsyncValidatorFn[] | null) {
     super(controls, validatorOrOpts, asyncValidator);

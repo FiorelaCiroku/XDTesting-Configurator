@@ -1,0 +1,45 @@
+<h1 class="text-center text-sm-start mb-1">Ontologies</h1>
+
+
+<config-alert [type]="errorMsg ? 'danger' : 'success'" [(isOpen)]="showAlert">
+  {{ errorMsg || successMsg }}
+</config-alert>
+
+
+<div class="row align-items-center mb-5">
+  <div class="col-12 col-sm-9 col-lg-10 text-center text-sm-start">
+    {{ ontologies.length }} ontolog{{ ontologies.length !== 1 ? 'ies' : 'y'}} defined
+  </div>
+  <div class="col-12 col-sm-3 col-lg-2 text-center text-sm-end">
+    <button class="btn btn-primary w-100 w-sm-auto" (click)="addOntologyModal()">
+      <i class="fa-solid fa-plus"></i>&nbsp;Add Ontology
+    </button>
+  </div>
+</div>
+
+<p-table [value]="ontologies" responsiveLayout="scroll" [loading]="(apiService.$loading | async) || false"
+         [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Name</th>
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-ontology>
+    <tr>
+      <td>{{ ontology.name }}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-danger" (click)="deleteOntology(ontology.name)">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td class="text-center">
+        No ontology defined
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

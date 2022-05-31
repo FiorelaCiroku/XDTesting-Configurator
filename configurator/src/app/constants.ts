@@ -1,10 +1,9 @@
-import { TestType, TestTypeDefinition } from './models';
+import { FileTypeSpecs, TestType, TestTypeDefinition } from './models';
 
 export const SELECTED_REPO_KEY = 'selectedRepo';
 export const SELECTED_BRANCH_KEY = 'selectedBranch';
-export const SELECTED_TESTING_TYPE_KEY = 'selectedTestingType';
 export const TEST_TYPE_DEFINITIONS: {[k in TestType]: TestTypeDefinition} = {
-  GENERAL_CONSTRAINT: {
+  INFERENCE_VERIFICATION: {
     label: 'Inference Verification Test',
     idPrefix: 'IV'
   },
@@ -16,4 +15,10 @@ export const TEST_TYPE_DEFINITIONS: {[k in TestType]: TestTypeDefinition} = {
     label: 'Error Provocation Test',
     idPrefix: 'EP'
   }
+};
+
+export const FILE_TYPES: FileTypeSpecs = {
+  query: { folder: 'queries', label: 'Query' },
+  expectedResults: { folder: 'expectedResults', label: 'Expected Results' },
+  dataset: { folder: 'datasets', label: 'Sample Dataset' }
 };

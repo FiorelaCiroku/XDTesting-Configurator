@@ -42,12 +42,13 @@
         </a>
       </div>
 
-      <a routerLink="/fragments" routerLinkActive="active" class="mb-3" *ngIf="selectedRepo && selectedBranch && selectedTestingType === 'XD_TESTING'">
-        <i class="fa-solid fa-scroll"></i>&nbsp;Fragments
+      <a routerLink="/ontologies" routerLinkActive="active" class="mb-3" *ngIf="selectedRepo && selectedBranch">
+        <i class="fa-solid fa-diagram-project"></i>&nbsp;Ontologies
       </a>
 
-      <a routerLink="/tests" routerLinkActive="active" class="mb-3" *ngIf="selectedRepo && selectedBranch && selectedTestingType === 'STANDARD'">
-        <i class="fa-solid fa-vial-circle-check"></i>&nbsp;Tests
+
+      <a routerLink="/fragments" routerLinkActive="active" class="mb-3" *ngIf="selectedRepo && selectedBranch">
+        <i class="fa-solid fa-scroll"></i>&nbsp;Fragments
       </a>
 
       <a routerLink="/actions" routerLinkActive="active" class="mb-3">
@@ -60,9 +61,11 @@
   <div class="overlay"></div>
 
   <div class="main">
-    <config-spinner *ngIf="apiService.$loading.value"
-                    class="w-100 h-100 d-flex align-items-center justify-content-center">
-    </config-spinner>
+    <div *ngIf="apiService.$loading | async" class="w-100 h-100 d-flex align-items-center justify-content-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
 
     <div *ngIf="!selectedRepo || !selectedBranch" class="w-100 h-100 d-flex align-items-center justify-content-center">
       <p class="m-0 text-center">

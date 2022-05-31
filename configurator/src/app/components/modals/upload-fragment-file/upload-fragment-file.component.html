@@ -1,0 +1,38 @@
+<config-alert [type]="errorMsg ? 'danger' : 'success'" [(isOpen)]="showAlert">
+  <ng-container *ngIf="errorMsg">
+    {{ errorMsg }}
+  </ng-container>
+
+  <ng-container *ngIf="successMsg">
+    {{successMsg}}
+  </ng-container>
+</config-alert>
+
+<form [formGroup]="formGroup" (submit)="upload($event)">
+  <div class="mb-3">
+    <label class="mb-1" for="fileType">File Type</label>
+    <select id="fileType" formControlName="fileType" class="form-select" required configValidationFeedback>
+      <option [ngValue]="null"></option>
+      <option *ngFor="let f of fileTypes | keyvalue" [ngValue]="f.key">{{f.value.label}}</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="file" class="mb-1 form-label">File</label>
+    <input formControlName="file"
+           class="form-control"
+           configFileInput
+           configValidationFeedback
+           id="file"
+           required
+           type="file">
+  </div>
+
+
+  <div class="mt-5 mb-2 text-end">
+    <button type="submit" class="btn btn-primary w-100 w-sm-auto" [disabled]="uploading">
+      <span *ngIf="uploading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      Save
+    </button>
+  </div>
+</form>

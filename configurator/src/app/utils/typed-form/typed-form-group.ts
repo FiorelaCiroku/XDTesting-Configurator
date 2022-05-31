@@ -1,6 +1,7 @@
 import { AbstractControlOptions, AsyncValidatorFn, FormGroup, ValidatorFn } from '@angular/forms';
 import { TypedAbstractControl, TypedFormGroupModel, ControlResetObject } from '../../models/typed-form';
 import { Observable } from 'rxjs';
+import { RecursivePartial } from '../../models';
 
 export class TypedFormGroup<T = never> extends FormGroup implements TypedAbstractControl<T> {
 
@@ -34,11 +35,11 @@ export class TypedFormGroup<T = never> extends FormGroup implements TypedAbstrac
     return super.contains(controlName);
   }
 
-  override setValue(value: Partial<T>, options?: { onlySelf?: boolean; emitEvent?: boolean; }): void {
+  override setValue(value: RecursivePartial<T>, options?: { onlySelf?: boolean; emitEvent?: boolean; }): void {
     super.setValue(value, options);
   }
 
-  override patchValue(value: Partial<T>, options?: { onlySelf?: boolean; emitEvent?: boolean; }): void {
+  override patchValue(value: RecursivePartial<T>, options?: { onlySelf?: boolean; emitEvent?: boolean; }): void {
     super.patchValue(value, options);
   }
 

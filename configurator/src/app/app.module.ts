@@ -13,57 +13,82 @@ import { TableModule } from 'primeng/table';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import {
-  CreateFragmentComponent,
-  FragmentDetailComponent,
-  FragmentListComponent,
-  EditFragmentTestComponent,
-  LoginComponent,
-  LayoutComponent,
-  SpinnerComponent,
-  SelectFileComponent,
-  AlertComponent,
-  ActionsComponent,
-  SelectRepoComponent,
-  TestListComponent, CreateTestComponent
-} from './components';
+import { LayoutComponent } from './components';
 import { ValidationFeedbackDirective, FileInputDirective } from './directives';
 import { HttpInterceptorService } from './services';
+import { AlertComponent } from './components/utils';
+import {
+  SelectFileComponent,
+  SelectRepoComponent,
+  UploadFragmentFileComponent,
+  UploadOntologyComponent
+} from './components/modals';
+import {
+  ActionsComponent,
+  CreateFragmentComponent,
+  TestCrudComponent, FragmentDetailComponent,
+  FragmentListComponent,
+  LoginComponent
+} from './components/pages';
+import { FilesTableComponent } from './components/shared/files-table/files-table.component';
+import { FileInputComponent } from './components/pages/test-crud/file-input/file-input.component';
+import { SummaryComponent } from './components/shared/summary/summary.component';
+import { InputTextModule } from 'primeng/inputtext';
+import { DataInputComponent } from './components/pages/test-crud/data-input/data-input.component';
+import { OntologyListComponent } from './components/pages/ontology-list/ontology-list.component';
 
 
 
 @NgModule({
   declarations: [
     AppComponent,
+    LayoutComponent,
+
+    // Pages
+    ActionsComponent,
     CreateFragmentComponent,
+    TestCrudComponent,
     FragmentDetailComponent,
     FragmentListComponent,
-    EditFragmentTestComponent,
     ValidationFeedbackDirective,
     LoginComponent,
-    LayoutComponent,
-    FileInputDirective,
-    SpinnerComponent,
+
+    // Modals
     SelectFileComponent,
-    AlertComponent,
-    ActionsComponent,
     SelectRepoComponent,
-    TestListComponent,
-    CreateTestComponent
+
+    // Utils
+    AlertComponent,
+
+    // Directives
+    FileInputDirective,
+     FilesTableComponent,
+     FileInputComponent,
+     SummaryComponent,
+     DataInputComponent,
+     UploadFragmentFileComponent,
+     OntologyListComponent,
+     UploadOntologyComponent,
   ],
   imports: [
+    // Angular
     BrowserModule,
     BrowserAnimationsModule,
-    AppRoutingModule,
-    TableModule,
-    ReactiveFormsModule,
-    AccordionModule,
-    HttpClientModule,
     FormsModule,
+    HttpClientModule,
+    ReactiveFormsModule,
+
+    // Application
+    AppRoutingModule,
+
+    // PrimeNG
+    AccordionModule,
+    CheckboxModule,
     DialogModule,
     DynamicDialogModule,
     InputSwitchModule,
-    CheckboxModule
+    InputTextModule,
+    TableModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true },
