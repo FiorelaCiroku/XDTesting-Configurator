@@ -16,6 +16,15 @@
           "dataFileName": "",
           "expectedResultsFileName": "",
           "id": "EP001"
+        },
+        {
+          "type": "INFERENCE_VERIFICATION",
+          "content": "abc",
+          "query": null,
+          "queryFileName": "",
+          "dataFileName": "",
+          "expectedResultsFileName": "",
+          "id": "IV001"
         }
       ]
     }
