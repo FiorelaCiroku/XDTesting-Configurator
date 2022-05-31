@@ -4,15 +4,13 @@
   "fragments": [
     {
       "name": "Fragment 1",
-      "ontologyName": "Ontology name",
-      "tests": [
-        {
-          "type": "COMPETENCY_QUESTION",
-          "content": "abc",
-          "query": "abc",
-          "id": "CQ001"
-        }
-      ]
+      "ontologyName": "Ontology Name"
+    }
+  ],
+  "ontologies": [
+    {
+      "url": "https://raw.githubusercontent.com/MatteoMUni/XDTesting-Configurator/main/.xd-testing/Ontology Name/note_20220531120133337.txt",
+      "name": "Ontology Name"
     }
   ]
 }
