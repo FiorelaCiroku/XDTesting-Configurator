@@ -17,7 +17,7 @@
   </div>
 </div>
 
-<p-table [value]="ontologies" responsiveLayout="scroll" [loading]="(apiService.$loading | async) || false"
+<p-table [value]="ontologies" responsiveLayout="scroll" [loading]="(apiService.$loading | async) || deleting"
          [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]">
   <ng-template pTemplate="header">
     <tr>

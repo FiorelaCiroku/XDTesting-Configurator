@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Ontology } from '../../../models';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ApiService } from '../../../services';
-import { catchError, EMPTY, of, switchMap, tap } from 'rxjs';
+import { catchError, of, switchMap, tap } from 'rxjs';
 import { UploadOntologyComponent } from '../../modals';
 
 @Component({
@@ -17,6 +17,7 @@ export class OntologyListComponent {
   successMsg?: string;
   ontologies: Ontology[] = [];
   showAlert = false;
+  deleting = false;
 
   constructor(readonly apiService: ApiService, private dialogService: DialogService) {
     this._init();
@@ -41,6 +42,8 @@ export class OntologyListComponent {
       return;
     }
 
+    this.deleting = true;
+
     const $sub = this.apiService.deleteOntology(name)
       .pipe(tap((res) => {
         this.errorMsg = undefined;
@@ -57,9 +60,11 @@ export class OntologyListComponent {
       .pipe(switchMap(() => this.apiService.listOntologies()))
       .pipe(catchError((err) => {
         this.errorMsg = err;
-        return EMPTY;
+        this.successMsg = undefined;
+        return of([]);
       }))
       .subscribe(() => {
+        this.deleting = false;
         $sub.unsubscribe();
       });
   }

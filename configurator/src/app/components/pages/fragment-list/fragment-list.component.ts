@@ -1,8 +1,9 @@
-import { Component} from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ApiService } from '../../../services';
 import { Fragment } from '../../../models';
 import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs';
+import { Table } from 'primeng/table';
 
 @Component({
   selector: 'config-fragment-list',
@@ -15,6 +16,10 @@ export class FragmentListComponent {
   error?: string;
   showAlert = false;
 
+  @ViewChild('table', {read: Table}) table?: Table;
+  @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
+
+
   constructor(public apiService: ApiService, private _router: Router) {
     const $sub = apiService.getFragments()
       .subscribe(fragments => {
@@ -24,6 +29,22 @@ export class FragmentListComponent {
       });
   }
 
+  clear(table: Table): void {
+    table.clear();
+    if (this.tableFilter?.nativeElement) {
+      this.tableFilter.nativeElement.value = '';
+    }
+  }
+
+  filterContent(e: Event): void {
+    const input = e?.target as HTMLInputElement;
+
+    if (!input) {
+      return;
+    }
+
+    this.table?.filterGlobal(input.value, 'contains');
+  }
 
   removeFragment(name: string): void {
     if (!confirm('Are you sure? All data will be lost')) {

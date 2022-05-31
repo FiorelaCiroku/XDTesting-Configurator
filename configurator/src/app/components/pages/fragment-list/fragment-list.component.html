@@ -24,11 +24,34 @@
 </div>
 
 <p-table [value]="fragments" responsiveLayout="scroll" [loading]="(apiService.$loading | async) || deleting"
-         [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]">
+         [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]"
+         [globalFilterFields]="['name', 'ontologyName']" #table>
+
+  <ng-template pTemplate="caption">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+      <button class="btn btn-primary d-block d-md-inline-block w-100 w-md-auto" (click)="clear(table)">
+        <i class="fa-solid fa-filter-circle-xmark"></i>
+        &nbsp;
+        Clear filter
+      </button>
+
+      <span class="p-input-icon-left w-100 w-md-auto">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" class="w-100 w-md-auto" (input)="filterContent($event)"
+                 placeholder="Search keyword" #tableFilter/>
+        </span>
+    </div>
+  </ng-template>
   <ng-template pTemplate="header">
     <tr>
-      <th>Ontology Fragment Name</th>
-      <th>Ontology</th>
+      <th>
+        Ontology Fragment Name
+        <p-columnFilter type="text" field="name" display="menu" class="ms-2"></p-columnFilter>
+      </th>
+      <th>
+        Ontology Name
+        <p-columnFilter type="text" field="ontologyName" display="menu" class="ms-2"></p-columnFilter>
+      </th>
       <th></th>
     </tr>
   </ng-template>
