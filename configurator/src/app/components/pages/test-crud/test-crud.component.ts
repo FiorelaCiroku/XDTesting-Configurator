@@ -5,7 +5,6 @@ import {
   catchError,
   concat,
   EMPTY,
-  filter, forkJoin,
   lastValueFrom,
   Observable,
   of,
@@ -13,7 +12,7 @@ import {
   switchMap,
   tap,
   throwError,
-  toArray
+  toArray, zip
 } from 'rxjs';
 import {
   ApiResult,
@@ -82,14 +81,8 @@ export class TestCrudComponent implements OnDestroy {
     });
 
 
-    this.queryFg = [{label: 'Query', formGroup: this.fg.controls.query}];
-    this.dataFgs = [{
-      label: 'Sample dataset',
-      formGroup: this.fg.controls.data
-    }, {
-      label: 'Expected results',
-      formGroup: this.fg.controls.expectedResults
-    }];
+    this.queryFg = this._initQueryFgs();
+    this.dataFgs = this._initDataFgs();
 
     this._init();
   }
@@ -100,6 +93,9 @@ export class TestCrudComponent implements OnDestroy {
 
   onTypeSelect(): void {
     const expectedResultsControls = this.fg.controls.expectedResults.controls;
+
+    this.queryFg = this._initQueryFgs();
+    this.dataFgs = this._initDataFgs();
 
     if (this.fg.controls.type.value !== 'ERROR_PROVOCATION') {
       expectedResultsControls.file.enable();
@@ -266,29 +262,35 @@ export class TestCrudComponent implements OnDestroy {
 
 
   private _init(): void {
-    this._fragmentsSub = this._route.params
-      .pipe(filter((p: EditFragmentTestParams) => {
-        const keep = p.fragmentName && p.testId;
-        if (!keep) {
-          this._apiService.$loading.next(false);
+    const $fragment: Observable<Fragment> =  this._route.params
+      .pipe(switchMap((p: EditFragmentTestParams) => {
+        if (!p.fragmentName) {
+          return throwError(() => 'Empty fragment name');
+        }
+        return this._apiService.getFragment(p.fragmentName);
+      }));
+
+    const $test: Observable<TestDetail | undefined> = this._route.params
+      .pipe(switchMap((p: EditFragmentTestParams) => {
+        if (p.testId) {
+          return this._apiService.getFragmentTest(p.fragmentName, p.testId);
         }
 
-        return keep;
-      }))
-      .pipe(switchMap((p: EditFragmentTestParams): Observable<[TestDetail, Fragment]> =>
-        forkJoin([
-          this._apiService.getFragmentTest(p.fragmentName, p.testId),
-          this._apiService.getFragment(p.fragmentName)
-        ])
-      ))
+        return of(undefined);
+      }));
+
+    this._fragmentsSub = zip($fragment, $test)
       .pipe(catchError(err => {
         this.initErrorMsg = err;
         return EMPTY;
       }))
-      .subscribe(([testDetail, fragment]: [TestDetail, Fragment]) => {
+      .subscribe(([fragment, testDetail]) => {
         this.fragment = fragment;
         this.test = testDetail;
-        this._updateFormGroup(testDetail);
+
+        if (testDetail) {
+          this._updateFormGroup(testDetail);
+        }
       });
   }
 
@@ -311,7 +313,47 @@ export class TestCrudComponent implements OnDestroy {
     });
 
 
-    this.queryFg = [...this.queryFg];
-    this.dataFgs = [...this.dataFgs];
+    this.queryFg = this._initQueryFgs();
+    this.dataFgs = this._initDataFgs();
+  }
+
+  private _initQueryFgs(): FileInputFormGroupSpec[] {
+    const type: TestType = this.fg.controls.type.value;
+    let label = 'Query';
+    const placeholder = 'SELECT DISTINCT ?Concept WHERE {[] a ?Concept} ';
+
+    switch (type) {
+      case 'COMPETENCY_QUESTION':
+        label = 'SELECT SPARQL Query';
+        break;
+
+      case 'INFERENCE_VERIFICATION':
+        label = 'ASK SPARQL Query';
+        break;
+    }
+
+    return [{
+      label,
+      formGroup: this.fg.controls.query,
+      placeholder
+    }];
+  }
+
+  private _initDataFgs(): FileInputFormGroupSpec[] {
+    const type: TestType = this.fg.controls.type.value;
+    const result: FileInputFormGroupSpec[] = [{
+      label: 'Sample dataset' + (type === 'ERROR_PROVOCATION' ? ' with errors' : ''),
+      formGroup: this.fg.controls.data
+    }];
+
+    if (type !== 'ERROR_PROVOCATION') {
+      result.push({
+        label: 'Expected results',
+        formGroup: this.fg.controls.expectedResults
+      });
+    }
+
+    console.log(type, result);
+    return result;
   }
 }

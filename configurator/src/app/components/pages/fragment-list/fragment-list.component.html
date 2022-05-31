@@ -7,18 +7,18 @@
   </ng-container>
 
   <ng-container *ngIf="!error">
-    Fragment deleted successfully.
+    Ontology fragment deleted successfully.
   </ng-container>
 </config-alert>
 
 
 <div class="row align-items-center mb-5">
   <div class="col-12 col-sm-9 col-lg-10 text-center text-sm-start">
-    {{ fragments.length }} fragment{{ fragments.length !== 1 ? 's' : ''}} created
+    {{ fragments.length }} ontology fragment{{ fragments.length !== 1 ? 's' : ''}} created
   </div>
   <div class="col-12 col-sm-3 col-lg-2 text-center text-sm-end">
     <a routerLink="./create" class="btn btn-primary w-100 w-sm-auto">
-      <i class="fa-solid fa-plus"></i>&nbsp;Add Fragment
+      <i class="fa-solid fa-plus"></i>&nbsp;Add Ontology Fragment
     </a>
   </div>
 </div>
@@ -27,7 +27,7 @@
          [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]">
   <ng-template pTemplate="header">
     <tr>
-      <th>Name</th>
+      <th>Ontology Fragment Name</th>
       <th>Ontology</th>
       <th></th>
     </tr>
@@ -49,7 +49,7 @@
   <ng-template pTemplate="emptymessage">
     <tr>
       <td class="text-center" colspan="3">
-        No fragment defined
+        No ontology fragment defined
       </td>
     </tr>
   </ng-template>

@@ -1,10 +1,10 @@
-<h1 class="mb-5">Create New Fragment</h1>
+<h1 class="mb-5">Create new Ontology Fragment</h1>
 
 <div class="alert alert-{{saved ? 'success' : 'danger'}}" *ngIf="showAlert">
   <div class="row">
     <div class="col">
       <ng-container *ngIf="saved">
-        Fragment successfully saved
+        Ontology fragment successfully saved
         <br>
         <a routerLink=".." class="btn btn-link p-0 text-decoration-none">
           <i class="fa-solid fa-angle-left"></i>
@@ -12,7 +12,7 @@
         </a>
       </ng-container>
       <ng-container *ngIf="!saved">
-        Error during fragment save: {{ errorMsg }}
+        Error during ontology fragment save: {{ errorMsg }}
       </ng-container>
     </div>
     <div class="col flex-grow-0" role="button" (click)="showAlert = false">
@@ -31,7 +31,7 @@
   </div>
 
   <div class="mb-3">
-    <label for="fragment-name" class="form-label">Fragment Name</label>
+    <label for="fragment-name" class="form-label">Ontology fragment name</label>
     <input formControlName="name"
            id="fragment-name"
            class="form-control"
@@ -53,7 +53,7 @@
 
 <ng-container *ngIf="saved">
   <h5>Summary</h5>
-  <p>Created fragment data:</p>
+  <p>Created ontology fragment:</p>
 
   <table>
     <tr>
@@ -61,7 +61,7 @@
       <td>{{ formGroup.value?.ontologyName }}</td>
     </tr>
     <tr>
-      <th>Fragment Name:</th>
+      <th>Ontology fragment Name:</th>
       <td>{{ formGroup.value?.name }}</td>
     </tr>
   </table>

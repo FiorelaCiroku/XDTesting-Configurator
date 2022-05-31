@@ -36,7 +36,7 @@
     <div *ngIf="!useUploadedFile[i]">
       <ng-container *ngIf="showDefaultInput">
         <textarea class="form-control code-input" formControlName="content" *ngIf="!uploadFile[i]"
-                  [required]="!uploadFile[i] && !useUploadedFile[i]">
+                  [required]="!uploadFile[i] && !useUploadedFile[i]" [placeholder]="fg.placeholder">
         </textarea>
       </ng-container>
 

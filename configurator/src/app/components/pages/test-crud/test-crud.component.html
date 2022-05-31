@@ -5,13 +5,13 @@
 </ng-container>
 
 <ng-container *ngIf="!initErrorMsg && !saved && fragment">
-  <h1 class="mb-0">{{ test ? 'Edit' : 'Create'}} Test {{ test ? test.id : '' }}</h1>
+  <h1 class="mb-0">{{ test ? 'Edit' : 'Create'}} Test Case {{ test ? test.id : '' }}</h1>
   <h4 class="mb-5">{{fragment?.name}}</h4>
 </ng-container>
 
 <config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert">
   <ng-container *ngIf="saved">
-    Fragment successfully saved
+    Test case successfully saved
     <br>
     <a [routerLink]="test ? '../..' : '..'" class="btn btn-link p-0 text-decoration-none">
       <i class="fa-solid fa-angle-left"></i>
@@ -19,7 +19,7 @@
     </a>
   </ng-container>
   <ng-container *ngIf="!saved">
-    Error during fragment save: {{ saveErrorMsg }}
+    Error during test case save: {{ saveErrorMsg }}
   </ng-container>
 </config-alert>
 
@@ -28,7 +28,7 @@
     <h5 class="font-weight-bold">Details</h5>
 
     <div class="mb-3">
-      <label for="test-type" class="form-label">Type</label>
+      <label for="test-type" class="form-label">Test Case Type</label>
       <select id="test-type" class="form-select" configValidationFeedback formControlName="type" required (change)="onTypeSelect()">
         <option [value]="null"></option>
         <option *ngFor="let testType of testTypes | keyvalue" [value]="testType.key">{{ testType.value.label }}</option>
@@ -36,12 +36,13 @@
     </div>
 
     <div class="mb-3">
-      <label for="content" class="form-label">Requirement</label>
+      <label for="content" class="form-label">Test Case Requirement</label>
       <textarea id="content" class="form-control" formControlName="content" configValidationFeedback required></textarea>
     </div>
 
 
-    <config-file-input [formGroups]="queryFg" (onShowExistingFiles)="selectFile($event)"></config-file-input>
+    <config-file-input *ngIf="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'" [formGroups]="queryFg"
+                       (onShowExistingFiles)="selectFile($event)"></config-file-input>
 
 
 

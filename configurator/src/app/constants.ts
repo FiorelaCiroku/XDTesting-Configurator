@@ -8,7 +8,7 @@ export const TEST_TYPE_DEFINITIONS: {[k in TestType]: TestTypeDefinition} = {
     idPrefix: 'IV'
   },
   COMPETENCY_QUESTION: {
-    label: 'Competency Question Test',
+    label: 'Competency Question Verification Test',
     idPrefix: 'CQ'
   },
   ERROR_PROVOCATION: {

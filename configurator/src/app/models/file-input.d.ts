@@ -9,4 +9,5 @@ export interface FileInputFormGroup extends Record<string, unknown>{
 export interface FileInputFormGroupSpec {
   label: string;
   formGroup: TypedFormGroup<FileInputFormGroup>
+  placeholder?: string;
 }
