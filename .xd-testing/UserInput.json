@@ -26,5 +26,10 @@
       ]
     }
   ],
-  "ontologies": []
+  "ontologies": [
+    {
+      "url": "https://raw.githubusercontent.com/MatteoMUni/XDTesting-Configurator/main/.xd-testing/Ontology Name/note_20220531120133337.txt",
+      "name": "Ontology Name"
+    }
+  ]
 }
