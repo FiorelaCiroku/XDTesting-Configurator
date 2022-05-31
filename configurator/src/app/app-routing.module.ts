@@ -10,6 +10,10 @@ import {
 } from './components/pages';
 import { LayoutComponent } from './components';
 import { OntologyListComponent } from './components/pages/ontology-list/ontology-list.component';
+import { DocsComponent } from './components/pages/docs/docs.component';
+import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.component';
+import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
+import { TestDocsComponent } from './components/pages/docs/test-docs.component';
 
 const routes: Routes = [
   {
@@ -39,6 +43,28 @@ const routes: Routes = [
       {
         path: 'ontologies',
         component: OntologyListComponent
+      },
+      {
+        path: 'docs',
+        children: [
+          {
+            path: '',
+            component: DocsComponent
+          },
+          {
+            path: 'ontology',
+            component: OntologyDocsComponent
+          },
+          {
+            path: 'fragment',
+            component: FragmentDocsComponent
+          },
+          {
+            path: 'test',
+            component: TestDocsComponent
+          }
+        ]
+
       },
       {
         path: 'fragments',

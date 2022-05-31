@@ -36,7 +36,10 @@ import { SummaryComponent } from './components/shared/summary/summary.component'
 import { InputTextModule } from 'primeng/inputtext';
 import { DataInputComponent } from './components/pages/test-crud/data-input/data-input.component';
 import { OntologyListComponent } from './components/pages/ontology-list/ontology-list.component';
-
+import { DocsComponent } from './components/pages/docs/docs.component';
+import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.component';
+import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
+import { TestDocsComponent } from './components/pages/docs/test-docs.component';
 
 
 @NgModule({
@@ -52,6 +55,15 @@ import { OntologyListComponent } from './components/pages/ontology-list/ontology
     FragmentListComponent,
     ValidationFeedbackDirective,
     LoginComponent,
+    FilesTableComponent,
+    FileInputComponent,
+    SummaryComponent,
+    DataInputComponent,
+    UploadFragmentFileComponent,
+    OntologyListComponent,
+    UploadOntologyComponent,
+    DocsComponent,
+    OntologyDocsComponent,
 
     // Modals
     SelectFileComponent,
@@ -62,13 +74,8 @@ import { OntologyListComponent } from './components/pages/ontology-list/ontology
 
     // Directives
     FileInputDirective,
-     FilesTableComponent,
-     FileInputComponent,
-     SummaryComponent,
-     DataInputComponent,
-     UploadFragmentFileComponent,
-     OntologyListComponent,
-     UploadOntologyComponent,
+     FragmentDocsComponent,
+     TestDocsComponent,
   ],
   imports: [
     // Angular
@@ -91,8 +98,9 @@ import { OntologyListComponent } from './components/pages/ontology-list/ontology
     TableModule,
   ],
   providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true },
+    {provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true},
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}
