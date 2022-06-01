@@ -8,12 +8,12 @@ import { Component } from '@angular/core';
       <a routerLink="..">&lt; Back</a>
       <a routerLink="/docs">Main Docs Page</a>
     </div>
-    <p>In this section is explained how to use the ontology section of the tool.</p>
+    <p>In this section you will find the necessary information to use the ontology section of the XDTesting tool.</p>
 
     <h3>Main page</h3>
     <p>
-      In the main page it's present a table in which it is listed all the registered ontologies. There's a button on the
-      top-right side of the page with which it's possible to register or upload a new ontology.
+      In the main page it is present a table in which all the registered ontologies are listed. There's a button on the
+      top-right side of the page with which it is possible to register or upload a new ontology. 
     </p>
 
     <h3>New Ontology Modal</h3>
@@ -34,8 +34,7 @@ import { Component } from '@angular/core';
       <span class="ms-2">Upload new ontology</span>
     </div>
     <p>
-      it is possible to upload a new ontology file that will be uploaded inside the folder <code>.xd-testing/OntologyName</code>
-      where <code>OntologyName</code> is the name you give to your ontology.
+      it is possible to upload a new ontology file from your local machine. This file will be stored in the chosen GitHub repository under the folder <code>.xd-testing/OntologyName</code> where <code>OntologyName</code> is the name you give to your ontology.
     </p>
 
     <p class="text-danger">
