@@ -134,18 +134,21 @@ export class TestCrudComponent implements OnDestroy {
   selectFile(fg: FileInputFormGroupSpec): void {
     const ref = this._dialogService.open(SelectFileComponent, {
       data: {
-        fragment: this.fragment
+        fragment: this.fragment,
+        fileType: fg.fileType
       },
       header: `Select existing ${fg.label.toLowerCase()}`,
       modal: true
     });
 
     const $sub = ref.onClose.subscribe((file: FragmentFile) => {
-      fg.formGroup.patchValue({
-        content: '',
-        file: undefined,
-        fileName: `${file.name}.${file.extension}`
-      });
+      if (file) {
+        fg.formGroup.patchValue({
+          content: '',
+          file: undefined,
+          fileName: `${file.name}.${file.extension}`
+        });
+      }
 
       $sub.unsubscribe();
     });
@@ -192,40 +195,40 @@ export class TestCrudComponent implements OnDestroy {
 
     lastValueFrom(concat($queryFileUpload, $dataFileUpload, $expectedResultsFileUpload)
       .pipe(toArray())
-      .pipe(switchMap((results: ApiResult<{fileName?: string; content?: string}>[]) => {
-        const success = results.reduce((prev, current) => prev && current.success, true);
-        if (!success) {
-          return throwError(() => results.map(r => r.message).filter(m => !!m).join(', '));
-        }
-
-        const [queryRes, dataRes, erRes] = results;
-        updateValue = {
-          ...updateValue,
-          query: queryRes.data?.content,
-          queryFileName: queryRes.data?.fileName,
-
-          data: (formValue.dataContent.prefixes || '') + '\n\n',
-          dataFileName: dataRes.data?.fileName,
-
-          expectedResults: (formValue.dataContent.prefixes || '') + '\n\n',
-          expectedResultsFileName: erRes.data?.fileName,
-        };
-
-        for (const r of formValue.dataContent.rows) {
-          const data = `${r.subject} ${r.predicate} ${r.object}\n`;
-          updateValue.data += data;
-
-          if (r.expectedResult) {
-            updateValue.expectedResults += data;
+      .pipe(switchMap((results: ApiResult<{ fileName?: string; content?: string }>[]) => {
+          const success = results.reduce((prev, current) => prev && current.success, true);
+          if (!success) {
+            return throwError(() => results.map(r => r.message).filter(m => !!m).join(', '));
           }
-        }
 
-        updateValue.data = updateValue.data?.trim();
-        updateValue.expectedResults = updateValue.expectedResults?.trim();
+          const [queryRes, dataRes, erRes] = results;
+          updateValue = {
+            ...updateValue,
+            query: queryRes.data?.content,
+            queryFileName: queryRes.data?.fileName,
 
-        return this._apiService.updateFragmentTest(fragment.name, updateValue, this.test?.id);
-      })
-    )).finally(() => this._toggleDisable())
+            data: (formValue.dataContent.prefixes || '') + '\n\n',
+            dataFileName: dataRes.data?.fileName,
+
+            expectedResults: (formValue.dataContent.prefixes || '') + '\n\n',
+            expectedResultsFileName: erRes.data?.fileName,
+          };
+
+          for (const r of formValue.dataContent.rows) {
+            const data = `${r.subject} ${r.predicate} ${r.object}\n`;
+            updateValue.data += data;
+
+            if (r.expectedResult) {
+              updateValue.expectedResults += data;
+            }
+          }
+
+          updateValue.data = updateValue.data?.trim();
+          updateValue.expectedResults = updateValue.expectedResults?.trim();
+
+          return this._apiService.updateFragmentTest(fragment.name, updateValue, this.test?.id);
+        })
+      )).finally(() => this._toggleDisable())
       .then(result => {
         this.saved = result.success;
         this._showError(result.message);
@@ -247,7 +250,7 @@ export class TestCrudComponent implements OnDestroy {
   }
 
   private _init(): void {
-    const $fragment: Observable<Fragment> =  this._route.params
+    const $fragment: Observable<Fragment> = this._route.params
       .pipe(switchMap((p: EditFragmentTestParams) => {
         if (!p.fragmentName) {
           return throwError(() => 'Empty fragment name');
@@ -303,7 +306,7 @@ export class TestCrudComponent implements OnDestroy {
     const rows: RecursivePartial<DataSpec>[] = data.split(/\r?\n/).filter(r => !!r.trim()).map((r) => {
       const expectedResult = test.expectedResults?.includes(r) || false;
       const [subject, predicate, object, graph] = r.split(' ');
-      return { expectedResult, subject, predicate, object, graph };
+      return {expectedResult, subject, predicate, object, graph};
     });
 
     const formArray = this.fg.controls.dataContent.controls.rows;
@@ -353,7 +356,8 @@ export class TestCrudComponent implements OnDestroy {
     return {
       label,
       formGroup: this.fg.controls.query,
-      placeholder
+      placeholder,
+      fileType: 'query'
     };
   }
 
@@ -362,7 +366,8 @@ export class TestCrudComponent implements OnDestroy {
 
     return {
       label: 'Sample dataset' + (type === 'ERROR_PROVOCATION' ? ' with errors' : ''),
-      formGroup: this.fg.controls.data
+      formGroup: this.fg.controls.data,
+      fileType: 'dataset'
     };
   }
 
@@ -375,7 +380,8 @@ export class TestCrudComponent implements OnDestroy {
 
     return {
       label: 'Expected results',
-      formGroup: this.fg.controls.expectedResults
+      formGroup: this.fg.controls.expectedResults,
+      fileType: 'expectedResults'
     };
   }
 
@@ -441,7 +447,7 @@ export class TestCrudComponent implements OnDestroy {
     return false;
   }
 
-  private _uploadFiles(fg: TypedFormGroup<FileInputFormGroup>, type: FileTypes, hasContent = false): Observable<ApiResult<{fileName?: string; content?: string}>> {
+  private _uploadFiles(fg: TypedFormGroup<FileInputFormGroup>, type: FileTypes, hasContent = false): Observable<ApiResult<{ fileName?: string; content?: string }>> {
     const fgVal = fg.value;
     const fragment = this.fragment;
 
@@ -458,7 +464,7 @@ export class TestCrudComponent implements OnDestroy {
     }
 
     if ($obs) {
-      return $obs.pipe(map((res): ApiResult<{fileName?: string; content?: string}> => {
+      return $obs.pipe(map((res): ApiResult<{ fileName?: string; content?: string }> => {
         let fileName: string;
 
         if (!res.data?.startsWith(`${fragment.ontologyName}/${fragment.name}/${FILE_TYPES[type].folder}/`)) {
@@ -469,13 +475,13 @@ export class TestCrudComponent implements OnDestroy {
 
         return {
           ...res,
-          data: { fileName }
+          data: {fileName}
         };
       }));
     }
 
     if (hasContent && fgVal.content) {
-      return of({success: true, data: { content: fgVal.content}});
+      return of({success: true, data: {content: fgVal.content}});
     }
 
 
@@ -485,7 +491,7 @@ export class TestCrudComponent implements OnDestroy {
   private _showError(error?: string): void {
     this.saveErrorMsg = error;
     this.showAlert = true;
-    this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.alert.nativeElement?.scrollIntoView({behavior: 'smooth', block: 'start'});
   }
 
   private _resetMessages(): void {

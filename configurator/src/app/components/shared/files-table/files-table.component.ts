@@ -20,8 +20,8 @@ export class FilesTableComponent implements OnChanges {
   @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
 
 
-  ngOnChanges({ files }: { files: SimpleChange }): void {
-    if (!files.currentValue || files.currentValue === files.previousValue) {
+  ngOnChanges({ files }: { files?: SimpleChange }): void {
+    if (!files || !files.currentValue || files.currentValue === files.previousValue) {
       return;
     }
 

@@ -1,6 +1,6 @@
 import { Component, OnInit} from '@angular/core';
 import { ApiService } from '../../../services';
-import { Fragment, FragmentFile } from '../../../models';
+import { FileTypes, Fragment, FragmentFile } from '../../../models';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FILE_TYPES } from '../../../constants';
 
@@ -20,12 +20,13 @@ export class SelectFileComponent implements OnInit {
 
   ngOnInit(): void {
     const fragment: Fragment = this._config.data.fragment;
+    const type: FileTypes = this._config.data.fileType;
 
-    if (!fragment) {
+    if (!fragment || !type) {
       return;
     }
 
-    const $sub = this._apiService.listTestFiles(fragment)
+    const $sub = this._apiService.listTestFiles(fragment, type)
       .subscribe((files) => {
         const fileTypes = Object.values(FILE_TYPES);
         this.files = [];
