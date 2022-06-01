@@ -22,3 +22,13 @@ export const FILE_TYPES: FileTypeSpecs = {
   expectedResults: { folder: 'expectedResults', label: 'Expected Results' },
   dataset: { folder: 'datasets', label: 'Sample Dataset' }
 };
+
+export const REASONERS: string[] = [
+  'hermiT 1.4.3.456',
+  'Pellet',
+  'ELK 0.4.3',
+  'FaCT++ 1.6.5',
+  'Masto DL-Lite Reasoner',
+  'Ontop 4.1.0',
+  'jcel'
+];

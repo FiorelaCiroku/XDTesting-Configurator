@@ -44,6 +44,14 @@
       </select>
     </div>
 
+    <div class="mb-3" *ngIf="fg?.controls?.type?.value === 'INFERENCE_VERIFICATION'">
+      <label for="reasoner" class="form-label">Reasoner</label>
+      <select id="reasoner" class="form-select" formControlName="reasoner" configValidationFeedback
+              [required]="fg?.controls?.type?.value === 'INFERENCE_VERIFICATION'">
+        <option *ngFor="let reasoner of reasoners" [value]="reasoner">{{reasoner}}</option>
+      </select>
+    </div>
+
     <div class="mb-3" *ngIf="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'">
       <label for="content" class="form-label">
         Test Case Requirement

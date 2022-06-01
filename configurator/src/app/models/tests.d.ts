@@ -3,6 +3,7 @@ import { FileInputFormGroup } from './file-input';
 export interface TestDetail {
   id: string;
   type: TestType;
+  reasoner?: string;
   content: string;
   query?: string;
   queryFileName?: string;
@@ -14,6 +15,7 @@ export interface TestDetail {
 
 export interface TestDetailForm {
   type: TestType;
+  reasoner?: string;
   content: string;
   query: FileInputFormGroup;
   data: FileInputFormGroup;

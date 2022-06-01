@@ -25,7 +25,7 @@ import {
   TestType
 } from '../../../models';
 import { TypedFormArray, TypedFormControl, TypedFormGroup } from '../../../utils/typed-form';
-import { FILE_TYPES, TEST_TYPE_DEFINITIONS } from '../../../constants';
+import { FILE_TYPES, REASONERS, TEST_TYPE_DEFINITIONS } from '../../../constants';
 import { DialogService } from 'primeng/dynamicdialog';
 import { SelectFileComponent } from '../../modals';
 import { markAllAsTouchedOrDirty } from '../../../utils';
@@ -51,7 +51,8 @@ export class TestCrudComponent implements OnDestroy {
   savedTestSummary?: Summary[];
   showAlert = false;
   saveErrorMsg?: string;
-  testTypes = TEST_TYPE_DEFINITIONS;
+  readonly testTypes = TEST_TYPE_DEFINITIONS;
+  readonly reasoners = REASONERS;
 
   useDataFile = false;
   useExpectedResultsFile = false;
@@ -67,6 +68,7 @@ export class TestCrudComponent implements OnDestroy {
     this.fg = new TypedFormGroup<TestDetailForm>({
       type: new TypedFormControl<TestType>('COMPETENCY_QUESTION'),
       content: new TypedFormControl<string>(),
+      reasoner: new TypedFormControl<string>(this.reasoners[0]),
       query: new TypedFormGroup<FileInputFormGroup>({
         fileName: new TypedFormControl<string>(),
         file: new TypedFormControl<FileList>(),
@@ -186,6 +188,7 @@ export class TestCrudComponent implements OnDestroy {
     const updateValue: Omit<TestDetail, 'id'> = {
       type: formValue.type || 'INFERENCE_VERIFICATION',
       content: formValue.content || '',
+      reasoner: formValue.reasoner
     };
 
 
