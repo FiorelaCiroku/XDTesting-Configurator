@@ -10,7 +10,7 @@
           "type": "ERROR_PROVOCATION",
           "content": "Some requirement",
           "query": null,
-          "data": "@prefix : <http://example.com>\n\n:abc :abc :abc\n",
+          "data": "@prefix : <http://example.com>\n\nabc abc abc\n",
           "expectedResults": "@prefix : <http://example.com>\n\n",
           "queryFileName": "",
           "dataFileName": "",
