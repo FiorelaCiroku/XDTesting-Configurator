@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChange } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FileInputFormGroupSpec } from '../../../../models';
 
 
@@ -7,26 +7,21 @@ import { FileInputFormGroupSpec } from '../../../../models';
   templateUrl: './file-input.component.html',
   styleUrls: ['./file-input.component.scss']
 })
-export class FileInputComponent implements OnChanges {
+export class FileInputComponent {
 
   @Input() showDefaultInput = true;
   @Input() formGroupSpec?: FileInputFormGroupSpec;
+  @Input() currentFile?: string;
 
   @Output() onShowExistingFiles = new EventEmitter<FileInputFormGroupSpec>();
   @Output() onToggleUploadOrSelectUploaded = new EventEmitter<boolean>();
 
   uploadFile = false;
   useUploadedFile = false;
-  currentFile?: string;
+  selectedNewFile = false;
 
   constructor() {
     //
-  }
-
-  ngOnChanges({formGroup}: {formGroup?: SimpleChange}): void {
-    if (formGroup && formGroup.currentValue !== formGroup.previousValue) {
-      this.currentFile = this.formGroupSpec?.formGroup.controls.fileName.value;
-    }
   }
 
   shouldShowNewFile(): boolean {
@@ -36,8 +31,7 @@ export class FileInputComponent implements OnChanges {
       return false;
     }
 
-    return (fg.controls.file.value && fg.controls.file.value !== this.currentFile) ||
-      (fg.controls.fileName.value && fg.controls.fileName.value !== this.currentFile);
+    return this.selectedNewFile && (fg.controls.file.value?.length || fg.controls.fileName.value);
   }
 
   onToggle(): void {
@@ -46,5 +40,10 @@ export class FileInputComponent implements OnChanges {
     this.formGroupSpec?.formGroup.controls.content?.reset();
 
     this.onToggleUploadOrSelectUploaded.emit(this.uploadFile || this.useUploadedFile);
+  }
+
+  pickExisting(): void {
+    this.selectedNewFile = true;
+    this.onShowExistingFiles.emit(this.formGroupSpec);
   }
 }

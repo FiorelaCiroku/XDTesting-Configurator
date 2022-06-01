@@ -6,19 +6,24 @@ import {
   concat,
   EMPTY,
   lastValueFrom,
+  map,
   Observable,
   of,
   Subscription,
   switchMap,
-  tap,
   throwError,
-  toArray, zip
+  toArray,
+  zip
 } from 'rxjs';
 import {
   ApiResult,
   DataSpec,
   EditFragmentTestParams,
-  FileInputFormGroup, FileInputFormGroupSpec, Fragment, FragmentFile,
+  FileInputFormGroup,
+  FileInputFormGroupSpec,
+  FileTypes,
+  Fragment,
+  FragmentFile,
   RecursivePartial,
   TestDetail,
   TestDetailForm,
@@ -104,6 +109,7 @@ export class TestCrudComponent implements OnDestroy {
     topControls.data.reset();
     topControls.expectedResults.reset();
     topControls.dataContent.reset();
+    topControls.dataContent.controls.rows.clear();
   }
 
   resetDataAndExpectedResults(which: 'data' | 'expectedResults', checked: boolean): void {
@@ -112,12 +118,16 @@ export class TestCrudComponent implements OnDestroy {
     this.fg.controls.expectedResults.reset();
     this.fg.controls.data.reset();
     dataContentControls.prefixes.reset();
-    dataContentControls.rows = new TypedFormArray<DataSpec>([]);
+    dataContentControls.rows.clear();
 
     if (which === 'data') {
       this.useDataFile = checked;
     } else {
       this.useExpectedResultsFile = checked;
+    }
+
+    if (this.test) {
+      this._updateFileInputFormGroups(this.test);
     }
   }
 
@@ -137,128 +147,92 @@ export class TestCrudComponent implements OnDestroy {
         fileName: `${file.name}.${file.extension}`
       });
 
-      console.log({fg, val: this.fg.value});
       $sub.unsubscribe();
     });
   }
 
   save(): void {
-    if (!this.fragment) {
+    this._resetMessages();
+    const fragment = this.fragment;
+
+    if (!fragment) {
+      this._showError('Application error: Unable to retrieve fragment');
       return;
     }
-
-    this.saveErrorMsg = undefined;
 
     if (!this.fg.valid) {
       markAllAsTouchedOrDirty(this.fg);
       markAllAsTouchedOrDirty(this.fg, true);
-      this.saveErrorMsg = 'Missing required fields';
-      this.showAlert = true;
-      this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
+      this._showError('Missing required fields');
       return;
     }
 
-    const errored = this._checkRequired();
+    const formValue = this.fg.value;
+    if (!formValue) {
+      this._showError('Application error: Unable to retrieve form value');
+      return;
+    }
 
-    if ((Array.isArray(errored) && errored.length > 0) || errored === false) {
-      if ((Array.isArray(errored) && errored.length > 0)) {
-        this.saveErrorMsg = `Missing Required field${errored.length === 1 ? '' : 's'} "${errored.join('", "')}"`;
-      } else if (errored === false) {
-        this.saveErrorMsg = 'Error during save';
-      }
-
-      this.showAlert = true;
-      this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!this._checkRequired()) {
       return;
     }
 
     this._toggleDisable();
 
-    let $queryFileUpload: Observable<ApiResult<string>> = of({success: true});
-    let $dataFileUpload: Observable<ApiResult<string>> = of({success: true});
-    let $expectedResultsFileUpload: Observable<ApiResult<string>> = of({success: true});
+    const $queryFileUpload = this._uploadFiles(this.fg.controls.query, 'query', true);
+    const $dataFileUpload = this._uploadFiles(this.fg.controls.data, 'dataset');
+    const $expectedResultsFileUpload = this._uploadFiles(this.fg.controls.expectedResults, 'expectedResults');
 
-    const formValue = this.fg.value;
 
-    if (!formValue) {
-      return;
-    }
-
-    const updateValue: Omit<TestDetail, 'id'> = {
+    let updateValue: Omit<TestDetail, 'id'> = {
       type: formValue.type || 'INFERENCE_VERIFICATION',
       content: formValue.content || '',
       reasoner: formValue.reasoner
     };
 
-
-    if (formValue.query.file?.length || formValue.query.fileName) {
-      $queryFileUpload = this._apiService.uploadTestFile(formValue.query.file?.[0], 'query', this.fragment);
-      updateValue.queryFileName = this.fragment.ontologyName + '/' + this.fragment.name +
-        `/${FILE_TYPES['query'].folder}/` +
-        (formValue.query.file?.[0]?.name || formValue.query.fileName);
-
-    } else if (formValue?.query) {
-      updateValue.query = formValue.query.content;
-    }
-
-
-    if (formValue.expectedResults.file?.length || formValue.expectedResults.fileName) {
-      $expectedResultsFileUpload = this._apiService.uploadTestFile(
-        formValue.expectedResults.file?.[0],
-        'expectedResults',
-        this.fragment
-      );
-
-      updateValue.expectedResultsFileName = this.fragment.ontologyName + '/' + this.fragment.name +
-        `/${FILE_TYPES['expectedResults'].folder}/` +
-        (formValue.expectedResults.file?.[0]?.name || formValue.expectedResults.fileName);
-    }
-
-
-    if (formValue.data.file?.length || formValue.data.fileName) {
-      $dataFileUpload = this._apiService.uploadTestFile(formValue.data.file?.[0], 'dataset', this.fragment);
-      updateValue.dataFileName = this.fragment.ontologyName + '/' + this.fragment.name +
-        `/${FILE_TYPES['dataset'].folder}/` +
-        (formValue.data.file?.[0]?.name || formValue.data.fileName);
-
-    } else if (formValue.dataContent.rows.length) {
-      updateValue.data = (formValue.dataContent.prefixes || '') + '\n\n';
-      updateValue.expectedResults = (formValue.dataContent.prefixes || '') + '\n\n';
-
-      for (const r of formValue.dataContent.rows) {
-        const data = `${r.subject} ${r.predicate} ${r.object}\n`;
-        updateValue.data += data;
-
-        if (r.expectedResult) {
-          updateValue.expectedResults += data;
-        }
-      }
-    }
-
-    lastValueFrom(concat(
-      $queryFileUpload.pipe(tap((res) => updateValue.queryFileName = res.data ? (this.fragment!.ontologyName + this.fragment!.name + `/${FILE_TYPES['query']}/` + + res.data) : '')),
-      $dataFileUpload.pipe(tap((res) => updateValue.dataFileName = res.data ? (this.fragment!.ontologyName + this.fragment!.name + `/${FILE_TYPES['dataset']}/` + res.data) : '')),
-      $expectedResultsFileUpload.pipe(tap((res) => updateValue.expectedResultsFileName = res.data ? (this.fragment!.ontologyName + this.fragment!.name + `/${FILE_TYPES['expectedResults']}/` + res.data) : ''))
-    ).pipe(toArray())
-      .pipe(switchMap((results: ApiResult<string>[]) => {
+    lastValueFrom(concat($queryFileUpload, $dataFileUpload, $expectedResultsFileUpload)
+      .pipe(toArray())
+      .pipe(switchMap((results: ApiResult<{fileName?: string; content?: string}>[]) => {
         const success = results.reduce((prev, current) => prev && current.success, true);
         if (!success) {
-          return throwError(() => results.map(r => r.message).filter(m => !!m).join('\n'));
+          return throwError(() => results.map(r => r.message).filter(m => !!m).join(', '));
         }
 
-        return this._apiService.updateFragmentTest(this.fragment?.name || '', updateValue, this.test?.id);
+        const [queryRes, dataRes, erRes] = results;
+        updateValue = {
+          ...updateValue,
+          query: queryRes.data?.content,
+          queryFileName: queryRes.data?.fileName,
+
+          data: (formValue.dataContent.prefixes || '') + '\n\n',
+          dataFileName: dataRes.data?.fileName,
+
+          expectedResults: (formValue.dataContent.prefixes || '') + '\n\n',
+          expectedResultsFileName: erRes.data?.fileName,
+        };
+
+        for (const r of formValue.dataContent.rows) {
+          const data = `${r.subject} ${r.predicate} ${r.object}\n`;
+          updateValue.data += data;
+
+          if (r.expectedResult) {
+            updateValue.expectedResults += data;
+          }
+        }
+
+        updateValue.data = updateValue.data?.trim();
+        updateValue.expectedResults = updateValue.expectedResults?.trim();
+
+        return this._apiService.updateFragmentTest(fragment.name, updateValue, this.test?.id);
       })
     )).finally(() => this._toggleDisable())
       .then(result => {
         this.saved = result.success;
-        this.saveErrorMsg = result.message;
-        this.showAlert = true;
+        this._showError(result.message);
         this._buildSummary(result.data);
       })
       .catch(err => {
-        this.saveErrorMsg = err;
-        this.showAlert = true;
+        this._showError(err);
       });
 
   }
@@ -271,7 +245,6 @@ export class TestCrudComponent implements OnDestroy {
       this.fg.enable();
     }
   }
-
 
   private _init(): void {
     const $fragment: Observable<Fragment> =  this._route.params
@@ -306,9 +279,27 @@ export class TestCrudComponent implements OnDestroy {
       });
   }
 
-
   private _updateFormGroup(test: TestDetail): void {
-    const [prefixes, data] = (test.data || '\n\n').split(/\r?\n{2}/);
+    this.fg.patchValue({
+      content: test.content,
+      reasoner: test.reasoner,
+      type: test.type,
+    });
+
+    this._updateFileInputFormGroups(test);
+  }
+
+  private _updateFileInputFormGroups(test: TestDetail): void {
+    const chunks = (test.data || '\n\n').split(/(?:\r?\n){2}/);
+    let data, prefixes = '';
+
+    if (chunks.length === 1) {
+      data = chunks[0];
+    } else {
+      prefixes = chunks[0];
+      data = chunks[1];
+    }
+
     const rows: RecursivePartial<DataSpec>[] = data.split(/\r?\n/).filter(r => !!r.trim()).map((r) => {
       const expectedResult = test.expectedResults?.includes(r) || false;
       const [subject, predicate, object, graph] = r.split(' ');
@@ -328,8 +319,6 @@ export class TestCrudComponent implements OnDestroy {
     }
 
     this.fg.patchValue({
-      content: test.content,
-      type: test.type,
       query: {content: test.query, fileName: test.queryFileName},
       data: {fileName: test.dataFileName},
       expectedResults: {fileName: test.expectedResultsFileName},
@@ -390,8 +379,11 @@ export class TestCrudComponent implements OnDestroy {
     };
   }
 
-  private _checkRequired(): string[] | boolean {
+  private _checkRequired(): boolean {
+    this._resetMessages();
+
     if (!this.fg.value) {
+      this._showError('Application error: Unable to retrieve form value');
       return false;
     }
 
@@ -412,14 +404,14 @@ export class TestCrudComponent implements OnDestroy {
           errors.push('Sample dataset');
         }
 
-        return errors;
+        break;
 
       case 'ERROR_PROVOCATION':
         if (!data.file?.length && !data.fileName && countDataRows <= 0) {
-          return ['Sample dataset with errors'];
+          errors.push('Sample dataset with errors');
         }
 
-        return [];
+        break;
 
       case 'COMPETENCY_QUESTION':
         if (!query.file?.length && !query.content && !query.fileName) {
@@ -434,11 +426,72 @@ export class TestCrudComponent implements OnDestroy {
           errors.push('Expected results');
         }
 
-        return errors;
+        break;
 
       default:
+        this._showError('Application error: error during save');
         return false;
     }
+
+    if (errors.length === 0) {
+      return true;
+    }
+
+    this._showError(`Missing Required field${errors.length === 1 ? '' : 's'} "${errors.join('", "')}"`);
+    return false;
+  }
+
+  private _uploadFiles(fg: TypedFormGroup<FileInputFormGroup>, type: FileTypes, hasContent = false): Observable<ApiResult<{fileName?: string; content?: string}>> {
+    const fgVal = fg.value;
+    const fragment = this.fragment;
+
+    if (!fgVal || !fragment) {
+      return throwError(() => 'Application error: Could not get form value or fragment empty');
+    }
+
+    let $obs: Observable<ApiResult<string>> | undefined;
+
+    if (fgVal.file?.length) {
+      $obs = this._apiService.uploadTestFile(fgVal.file[0], type, fragment);
+    } else if (fgVal.fileName) {
+      $obs = of({success: true, data: fgVal.fileName});
+    }
+
+    if ($obs) {
+      return $obs.pipe(map((res): ApiResult<{fileName?: string; content?: string}> => {
+        let fileName: string;
+
+        if (!res.data?.startsWith(`${fragment.ontologyName}/${fragment.name}/${FILE_TYPES[type].folder}/`)) {
+          fileName = `${fragment.ontologyName}/${fragment.name}/${FILE_TYPES[type].folder}/${res.data}`;
+        } else {
+          fileName = res.data;
+        }
+
+        return {
+          ...res,
+          data: { fileName }
+        };
+      }));
+    }
+
+    if (hasContent && fgVal.content) {
+      return of({success: true, data: { content: fgVal.content}});
+    }
+
+
+    return of({success: true, data: {}});
+  }
+
+  private _showError(error?: string): void {
+    this.saveErrorMsg = error;
+    this.showAlert = true;
+    this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  private _resetMessages(): void {
+    this.initErrorMsg = '';
+    this.saveErrorMsg = '';
+    this.showAlert = false;
   }
 
   private _buildSummary(data?: TestDetail): void {

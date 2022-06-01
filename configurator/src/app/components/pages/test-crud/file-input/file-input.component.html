@@ -22,12 +22,12 @@
   </small>
 
   <small class="d-block" *ngIf="shouldShowNewFile()" [class.mb-2]="shouldShowNewFile()">
-    New "{{ formGroupSpec.label }}" file: <b>{{ formGroupSpec.formGroup.controls.file.value || formGroupSpec.formGroup.controls.fileName.value }}</b>
+    New "{{ formGroupSpec.label }}" file: <b>{{ formGroupSpec.formGroup.controls.file.value?.[0].name || formGroupSpec.formGroup.controls.fileName.value }}</b>
   </small>
 
 
   <button type="button" class="btn btn-primary w-100 w-sm-auto" *ngIf="useUploadedFile"
-          (click)="onShowExistingFiles.emit(formGroupSpec)">
+          (click)="pickExisting()">
     Select existing "{{ formGroupSpec.label }}" file
   </button>
 
@@ -42,6 +42,7 @@
            type="file"
            *ngIf="uploadFile"
            formControlName="file"
+           (change)="selectedNewFile = true"
            configFileInput>
   </div>
 

@@ -65,7 +65,7 @@
 
 
     <config-file-input *ngIf="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'" [formGroupSpec]="queryFg"
-                       (onShowExistingFiles)="selectFile($event)"></config-file-input>
+                       [currentFile]="test?.queryFileName" (onShowExistingFiles)="selectFile($event)"></config-file-input>
 
 
     <h5 class="font-weight-bold mt-5 mb-3">
@@ -77,11 +77,13 @@
       </i>
     </h5>
 
-    <config-file-input [formGroupSpec]="dataFg" [showDefaultInput]="false" (onShowExistingFiles)="selectFile($event)"
+    <config-file-input [formGroupSpec]="dataFg" [showDefaultInput]="false" [currentFile]="test?.dataFileName"
+                       (onShowExistingFiles)="selectFile($event)"
                        (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults('data', $event)">
     </config-file-input>
 
-    <config-file-input [formGroupSpec]="expectedResultFg" [showDefaultInput]="false" (onShowExistingFiles)="selectFile($event)"
+    <config-file-input [formGroupSpec]="expectedResultFg" [showDefaultInput]="false" [currentFile]="test?.expectedResultsFileName"
+                       (onShowExistingFiles)="selectFile($event)"
                        (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults('expectedResults', $event)">
     </config-file-input>
 
