@@ -25,7 +25,7 @@ export class SelectFileComponent implements OnInit {
       return;
     }
 
-    const $sub = this._apiService.listFragmentFiles(fragment)
+    const $sub = this._apiService.listTestFiles(fragment)
       .subscribe((files) => {
         const fileTypes = Object.values(FILE_TYPES);
         this.files = [];

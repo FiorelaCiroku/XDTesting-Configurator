@@ -1,5 +1,0 @@
-- Ontology fragment upload button
-x mix: data + expected results -> file & raw insert (da testare salvataggio)
-x check required fields for different types of tests
-x check summary of test case
-- Finire issues

@@ -128,7 +128,7 @@ export class FragmentDetailComponent {
   }
 
   private _initFiles(): Observable<ContentFile[]> {
-    return this.apiService.listFragmentFiles(this.fragment)
+    return this.apiService.listTestFiles(this.fragment)
       .pipe(tap((files) => {
         const fileTypes = Object.values(FILE_TYPES);
         this.fragmentFiles = [];

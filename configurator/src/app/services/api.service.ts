@@ -128,15 +128,21 @@ export class ApiService {
       }));
   }
 
-  listFragmentFiles(fragment?: Fragment): Observable<ContentFile[]> {
+  listTestFiles(fragment?: Fragment, type?: FileTypes): Observable<ContentFile[]> {
     if (!fragment) {
       return throwError(() => 'Empty fragment name');
     }
 
     const baseFragmentUrl = `.xd-testing/${fragment.ontologyName}/${fragment.name}`;
-    const urls = Object.values(FILE_TYPES).map(ft => baseFragmentUrl + '/' + ft.folder)
-      .filter(filterNullUndefined)
-      .filter(u => !!u);
+    let urls: string[] = [];
+
+    if (type) {
+      urls.push(baseFragmentUrl + '/' + FILE_TYPES[type].folder);
+    } else {
+      urls = Object.values(FILE_TYPES).map(ft => baseFragmentUrl + '/' + ft.folder)
+        .filter(filterNullUndefined)
+        .filter(u => !!u);
+    }
 
     if (!urls.length) {
       return throwError(() => 'Error retrieving files');
@@ -288,14 +294,62 @@ export class ApiService {
       }));
   }
 
-  uploadFile(dataFile?: File, type?: FileTypes, fragment?: Fragment): Observable<ApiResult<string>> {
+  uploadFragmentFile(dataFile?: File, fragment?: Fragment): Observable<ApiResult<string>> {
     if (!dataFile) {
       return of({success: true});
     }
 
     let name = dataFile.name;
 
-    return zip(from(dataFile.text()), this.listFragmentFiles(fragment))
+    if (!fragment) {
+      return throwError(() => 'Fragment not provided');
+    }
+
+    return zip(from(dataFile.text()), this.listFiles(`${this.baseDir}/${fragment.ontologyName}/${fragment.name}`))
+      .pipe(switchMap(([fileContent, fileList]) => {
+        const isPresent = fileList.filter(f => f.name === name).length > 0;
+
+        if (isPresent) {
+          const chunks = name.split('.');
+          const time = moment().format('YYYYMMDDHHmmssSSS');
+
+          if (chunks.length > 1) {
+            name = chunks.slice(0, -1).join('.') + '_' + time + '.' + chunks[chunks.length - 1];
+          } else {
+            name = name + '_' + time;
+          }
+        }
+
+        const body: CreateOrUpdateFile = {
+          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''),
+          content: encode(fileContent),
+        };
+
+        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/` +
+          (fragment ? `${fragment.ontologyName}/${fragment.name}` : '') + '/' + name
+        );
+
+        if (!url) {
+          return throwError(() => 'Could not get url. Missing repository or branch');
+        }
+
+        return this._http.put(url, body);
+      }))
+      .pipe(map(() => ({success: true, data: name}) ))
+      .pipe(catchError((err: HttpErrorResponse) => {
+        return of({success: false, message: err.message});
+      }));
+  }
+
+
+  uploadTestFile(dataFile?: File, type?: FileTypes, fragment?: Fragment): Observable<ApiResult<string>> {
+    if (!dataFile) {
+      return of({success: true});
+    }
+
+    let name = dataFile.name;
+
+    return zip(from(dataFile.text()), this.listTestFiles(fragment, type))
       .pipe(switchMap(([fileContent, fileList]) => {
         const isPresent = fileList.filter(f => f.name === name).length > 0;
 
@@ -466,7 +520,7 @@ export class ApiService {
       let name = ontology.file[0].name;
       const $content = from(ontology.file[0].text());
 
-      $uploadSrc = zip($content, this.listOntologies(), this.listFiles(`${this.baseDir}/ontologies`))
+      $uploadSrc = zip($content, this.listOntologies(), this.listFiles(`${this.baseDir}/${ontology.name}`))
         .pipe(switchMap(([fileContent, ontologies, fileList]: [string, Ontology[], ContentFile[]]) => {
           const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
 

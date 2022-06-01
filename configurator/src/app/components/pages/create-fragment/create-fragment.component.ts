@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { TypedFormControl, TypedFormGroup } from '../../../utils/typed-form';
-import { Fragment, Ontology } from '../../../models';
+import { ApiResult, Fragment, FragmentForm, Ontology } from '../../../models';
 import { ApiService } from '../../../services';
-import { catchError, lastValueFrom, of } from 'rxjs';
+import { catchError, Observable, of, switchMap } from 'rxjs';
+import { Summary } from '../../shared/summary/summary.component';
 
 @Component({
   selector: 'config-create-fragment',
@@ -13,14 +14,16 @@ export class CreateFragmentComponent {
 
   saved?: boolean;
   errorMsg?: string;
-  formGroup: TypedFormGroup<Fragment>;
+  formGroup: TypedFormGroup<FragmentForm>;
   showAlert = false;
   ontologies: Ontology[] = [];
+  summary: Summary[] = [];
 
   constructor(private _apiService: ApiService) {
-    this.formGroup = new TypedFormGroup<Fragment>({
+    this.formGroup = new TypedFormGroup<FragmentForm>({
       ontologyName: new TypedFormControl<string>(''),
       name: new TypedFormControl<string>(''),
+      file: new TypedFormControl<FileList>()
     });
 
     this._apiService.listOntologies()
@@ -45,33 +48,46 @@ export class CreateFragmentComponent {
       return;
     }
 
-    this._toggleDisableControls(true);
+    this._toggleDisableControls();
     const data = this.formGroup.value;
 
+    const fragment: Fragment = {
+      name: data?.name || '',
+      ontologyName: data?.ontologyName || ''
+    };
 
-    lastValueFrom(this._apiService.createFragment({name: data?.name || '', ontologyName: data?.ontologyName || ''}))
-      .finally(() => {
-        this._toggleDisableControls(false);
-      })
-      .then(result => {
+    const $sub = this._apiService.uploadFragmentFile(data?.file?.[0], fragment)
+      .pipe(switchMap((res) => {
+        fragment.fileName = `.xd-testing/${fragment.name}/${res.data}`;
+        return this._apiService.createFragment(fragment);
+      }))
+      .pipe(catchError((err): Observable<ApiResult> => {
+        return of({success: false, message: err});
+      }))
+      .subscribe((result) => {
         this.saved = result.success;
         this.errorMsg = result.message;
         this.showAlert = true;
-      })
-      .catch(() => {
-        this.errorMsg = 'Error during fragment save';
-        this.showAlert = true;
+
+        this.summary = [{
+          label: 'Ontology Name',
+          data: data?.ontologyName || '',
+        }, {
+          label: 'Ontology fragment Name',
+          data: data?.name || ''
+        }];
+
+        $sub.unsubscribe();
       });
 
   }
 
-  private _toggleDisableControls(disable: boolean): void {
-    for (const control of Object.values(this.formGroup.controls)) {
-      if (disable) {
-        control.disable();
-      } else {
-        control.enable();
-      }
+  private _toggleDisableControls(): void {
+    if (this.formGroup.disabled) {
+      this.formGroup.enable();
+      return;
     }
+
+    this.formGroup.disable();
   }
 }

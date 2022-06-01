@@ -61,7 +61,7 @@ export class UploadFragmentFileComponent implements OnInit {
     this.formGroup.disable();
     this.uploading = true;
 
-    const $sub = this.apiService.uploadFile(fgValue.file[0], fgValue.fileType, fragment)
+    const $sub = this.apiService.uploadTestFile(fgValue.file[0], fgValue.fileType, fragment)
       .pipe(tap((res) => {
         if (res.success) {
           this.successMsg = 'Files uploaded successfully';

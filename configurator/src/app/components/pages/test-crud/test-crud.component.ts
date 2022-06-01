@@ -190,7 +190,7 @@ export class TestCrudComponent implements OnDestroy {
 
 
     if (formValue.query.file?.length || formValue.query.fileName) {
-      $queryFileUpload = this._apiService.uploadFile(formValue.query.file?.[0], 'query', this.fragment);
+      $queryFileUpload = this._apiService.uploadTestFile(formValue.query.file?.[0], 'query', this.fragment);
       updateValue.queryFileName = this.fragment.ontologyName + '/' + this.fragment.name +
         `/${FILE_TYPES['query'].folder}/` +
         (formValue.query.file?.[0]?.name || formValue.query.fileName);
@@ -201,7 +201,7 @@ export class TestCrudComponent implements OnDestroy {
 
 
     if (formValue.expectedResults.file?.length || formValue.expectedResults.fileName) {
-      $expectedResultsFileUpload = this._apiService.uploadFile(
+      $expectedResultsFileUpload = this._apiService.uploadTestFile(
         formValue.expectedResults.file?.[0],
         'expectedResults',
         this.fragment
@@ -214,7 +214,7 @@ export class TestCrudComponent implements OnDestroy {
 
 
     if (formValue.data.file?.length || formValue.data.fileName) {
-      $dataFileUpload = this._apiService.uploadFile(formValue.data.file?.[0], 'dataset', this.fragment);
+      $dataFileUpload = this._apiService.uploadTestFile(formValue.data.file?.[0], 'dataset', this.fragment);
       updateValue.dataFileName = this.fragment.ontologyName + '/' + this.fragment.name +
         `/${FILE_TYPES['dataset'].folder}/` +
         (formValue.data.file?.[0]?.name || formValue.data.fileName);

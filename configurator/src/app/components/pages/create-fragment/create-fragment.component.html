@@ -41,6 +41,18 @@
            required>
   </div>
 
+  <div class="mb-3">
+    <label for="fragment-file" class="form-label">Ontology fragment file</label>
+    <input formControlName="file"
+           id="fragment-file"
+           class="form-control"
+           type="file"
+           accept=".owl"
+           configValidationFeedback
+           configFileInput
+           required>
+  </div>
+
   <div class="text-center text-sm-end">
     <button type="submit" class="btn btn-primary mb-1 mb-sm-0 me-sm-1 w-100 w-sm-auto">
       Create
@@ -54,15 +66,5 @@
 <ng-container *ngIf="saved">
   <h5>Summary</h5>
   <p>Created ontology fragment:</p>
-
-  <table>
-    <tr>
-      <th>Ontology Name:</th>
-      <td>{{ formGroup.value?.ontologyName }}</td>
-    </tr>
-    <tr>
-      <th>Ontology fragment Name:</th>
-      <td>{{ formGroup.value?.name }}</td>
-    </tr>
-  </table>
+  <config-summary [data]="summary"></config-summary>
 </ng-container>
