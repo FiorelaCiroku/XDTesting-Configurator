@@ -18,6 +18,11 @@
           "id": "EP001"
         }
       ]
+    },
+    {
+      "name": "Fragment 3",
+      "ontologyName": "Ontology Name",
+      "fileName": ".xd-testing/Fragment 3/note.txt"
     }
   ],
   "ontologies": [
