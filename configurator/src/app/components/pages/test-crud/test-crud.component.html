@@ -23,20 +23,35 @@
   </ng-container>
 </config-alert>
 
-<ng-container  *ngIf="!initErrorMsg && !saved && fragment">
+<ng-container *ngIf="!initErrorMsg && !saved && fragment">
   <form [formGroup]="fg" (submit)="save()" novalidate>
     <h5 class="font-weight-bold">Details</h5>
 
     <div class="mb-3">
-      <label for="test-type" class="form-label">Test Case Type</label>
+      <label for="test-type" class="form-label">
+        Test Case Type
+        <i class="fa-solid fa-circle-info tooltip-icon ms-2"
+           pTooltip="There are three types of test cases that you can build based on the eXtreme Design methodology.
+           Competency question verification tests allow verifying if the ontology can answer the competency questions
+           that have been selected during the requirement collection phase. Inference verification tests allow verifying
+           that the inference mechanisms are in place, to ensure the correct fulfilment of the inference requirement.
+           Error provocation tests allow verifying how the ontology acts when it is fed random or incorrect data">
+        </i>
+      </label>
       <select id="test-type" class="form-select" configValidationFeedback formControlName="type" required (change)="onTypeSelect()">
         <option [value]="null"></option>
         <option *ngFor="let testType of testTypes | keyvalue" [value]="testType.key">{{ testType.value.label }}</option>
       </select>
     </div>
 
-    <div class="mb-3">
-      <label for="content" class="form-label">Test Case Requirement</label>
+    <div class="mb-3" *ngIf="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'">
+      <label for="content" class="form-label">
+        Test Case Requirement
+        <i class="fa-solid fa-circle-info tooltip-icon ms-2"
+           pTooltip="A requirement in eXtreme Design can be a competency question or a general constraint that is
+           collected by means of an expert- or data-driven story">
+        </i>
+      </label>
       <textarea id="content" class="form-control" formControlName="content" configValidationFeedback required></textarea>
     </div>
 
@@ -45,7 +60,14 @@
                        (onShowExistingFiles)="selectFile($event)"></config-file-input>
 
 
-    <h5 class="font-weight-bold mt-5 mb-3">Data</h5>
+    <h5 class="font-weight-bold mt-5 mb-3">
+      Data
+      <i class="fa-solid fa-circle-info tooltip-icon ms-2"
+         pTooltip="Sample datasets are real of fictional data that are used to execute the test case on. You can upload
+         your sample dataset file or can build it on the fly. For further detail on how to build the sample dataset on
+         the fly please refer to the guidelines in the tab on the left">
+      </i>
+    </h5>
 
     <config-file-input [formGroupSpec]="dataFg" [showDefaultInput]="false" (onShowExistingFiles)="selectFile($event)"
                        (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults('data', $event)">

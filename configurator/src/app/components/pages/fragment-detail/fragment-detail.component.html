@@ -20,7 +20,12 @@
 
 <ng-container *ngIf="fragment">
   <div class="row">
-    <h3 class="col-12 col-sm-9">Test Cases</h3>
+    <h3 class=" col-12 col-sm-9 d-flex justify-content-center justify-content-md-start align-items-center mb-1">
+      Test Cases
+      <i class="fa-solid fa-circle-info tooltip-icon ms-2"
+         pTooltip="A test case is a container for storing information about a test, analogous with software unit testing">
+      </i>
+    </h3>
 
     <div class="col-12 col-sm-3 text-end">
       <a class="btn btn-primary mb-2 w-100 w-sm-auto" routerLink="./create-test">
@@ -80,7 +85,14 @@
   </p-table>
 
   <div class="row mb-2 mt-5">
-    <h3 class="col-12 col-sm-9">Input data for test cases</h3>
+    <h3 class=" col-12 col-sm-9 d-flex justify-content-center justify-content-md-start align-items-center mb-1">
+      Input data for test cases
+      <i class="fa-solid fa-circle-info tooltip-icon ms-2"
+         pTooltip=" Input data for test cases is a list of files that have been uploaded in previous constructions of
+         test cases. The files can be sample datasets, SPARQL queries and expected results in JSON or RDF. You can use
+         this data again for constructing test cases without having to upload them again">
+      </i>
+    </h3>
     <div class="col-12 col-sm-3 text-end">
       <button class="btn btn-primary w-100 w-sm-auto" (click)="uploadFiles()">
         <i class="fa-solid fa-upload me-2"></i>

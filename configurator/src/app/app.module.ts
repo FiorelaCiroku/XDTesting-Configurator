@@ -40,6 +40,7 @@ import { DocsComponent } from './components/pages/docs/docs.component';
 import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.component';
 import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
 import { TestDocsComponent } from './components/pages/docs/test-docs.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 
 @NgModule({
@@ -96,6 +97,7 @@ import { TestDocsComponent } from './components/pages/docs/test-docs.component';
     InputSwitchModule,
     InputTextModule,
     TableModule,
+    TooltipModule,
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true},
