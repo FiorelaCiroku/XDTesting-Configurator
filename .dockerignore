@@ -1,0 +1,5 @@
+.git
+.github
+.idea
+/configurator/node_modules
+/server/vendor

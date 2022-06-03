@@ -58,7 +58,7 @@ export class CreateFragmentComponent {
 
     const $sub = this._apiService.uploadFragmentFile(data?.file?.[0], fragment)
       .pipe(switchMap((res) => {
-        fragment.fileName = `.xd-testing/${fragment.name}/${res.data}`;
+        fragment.fileName = `${fragment.ontologyName}/${fragment.name}/${res.data}`;
         return this._apiService.createFragment(fragment);
       }))
       .pipe(catchError((err): Observable<ApiResult> => {

@@ -7,12 +7,14 @@ use Slim\App;
 use Symfony\Component\HttpClient\HttpClient;
 
 return function (App $app) {
-    $app->options('/{routes:.*}', function (Request $request, Response $response) {
-        // CORS Pre-Flight OPTIONS Request Handler
-        return $response;
-    });
+    if (isset($_ENV['ENV']) && ($_ENV['ENV'] === 'development' || $_ENV['ENV'] === 'dev')) {
+        $app->options('/{routes:.*}', function (Request $request, Response $response) {
+            // CORS Pre-Flight OPTIONS Request Handler
+            return $response;
+        });
+    }
 
-    $app->get('/login', function (Request $request, Response $response) {
+    $app->get("$_ENV[ROUTES_PREFIX]/login", function (Request $request, Response $response) {
         $qs = http_build_query([
             'scope' => $_ENV['GITHUB_SCOPES'],
             'client_id' => $_ENV['CLIENT_ID']
@@ -25,11 +27,11 @@ return function (App $app) {
             );
     });
 
-    $app->get('/login-callback', function (Request $request, Response $response) {
+    $app->get("$_ENV[ROUTES_PREFIX]/login-callback", function (Request $request, Response $response) {
         $body = $request->getQueryParams();
 
-	if (empty($body['code'])) {
-	    $response->getBody()->write(json_encode(['error' => 'Missing code']));
+        if (empty($body['code'])) {
+            $response->getBody()->write(json_encode(['error' => 'Missing code']));
             return $response->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
         }
@@ -73,24 +75,23 @@ return function (App $app) {
         $prevSalt = random_bytes(31);
         $nextSalt = random_bytes(61);
 
-        $token = preg_replace("/^gho_/", "", $token);
+        $token = preg_replace("/^gho_/", "", $data['access_token']);
         $token = base64_encode($prevSalt . $token . $nextSalt);
 
         $iv = random_bytes(16);
         $token = openssl_encrypt($token, 'aes-256-cbc', $_ENV['AES_SECRET'], iv: $iv);
-
-        return base64_encode(base64_encode($iv) . '.' . base64_encode($token));
+        $token = base64_encode(base64_encode($iv) . '.' . base64_encode($token));
 
         setcookie('GITHUB_TOKEN', $token, httponly: true);
 
         return $response->withStatus(200);
     });
 
-    $app->get('/is-auth', function (Request $request, Response $response) {
+    $app->get("$_ENV[ROUTES_PREFIX]/is-auth", function (Request $request, Response $response) {
         $cookies = $request->getCookieParams();
         $isAuthenticated = !empty($cookies['GITHUB_TOKEN']);
 
-	    if ($isAuthenticated) {
+        if ($isAuthenticated) {
             return $response->withStatus(200);
         }
 
@@ -119,12 +120,16 @@ return function (App $app) {
 
 
             $path = $request->getUri()->getPath();
-            if (str_starts_with($path, '/')) {
-                $path = substr($path, 1);
+            $prefix = $_ENV['ROUTES_PREFIX'];
+
+            if (str_starts_with($prefix, '/')) {
+                $prefix = substr($prefix, 1);
             }
 
-            if (str_ends_with($path, 'contents/')) {
-                $path .= '.xd-testing/UserInput.json';
+            $path = preg_replace("/^\/?$prefix\/?/", '/', $path);
+
+            if (str_starts_with($path, '/')) {
+                $path = substr($path, 1);
             }
 
             $qs = $request->getUri()->getQuery();
@@ -133,7 +138,7 @@ return function (App $app) {
             $ifNoneMatch = $request->getHeader('If-None-Match');
             $headers = [
                 'Content-Type' => $request->getHeader('Content-Type'),
-                'Authorization' => "Bearer $token[1]"
+                'Authorization' => "Bearer $token"
             ];
 
             if (!empty($ifNoneMatch)) {
@@ -152,8 +157,9 @@ return function (App $app) {
             $apiResponseHeaders = $apiResponse->getHeaders(false);
 
             foreach ($apiResponseHeaders as $key => $values) {
-                if (!in_array($key, ['server', 'content-encoding']))
-                $response = $response->withHeader($key, $values);
+                if (!in_array($key, ['server', 'content-encoding', 'transfer-encoding'])) {
+                    $response = $response->withHeader($key, $values);
+                }
             }
 
             return $response;
