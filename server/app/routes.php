@@ -9,8 +9,10 @@ use Symfony\Component\HttpClient\HttpClient;
 return function (App $app) {
     if (isset($_ENV['ENV']) && ($_ENV['ENV'] === 'development' || $_ENV['ENV'] === 'dev')) {
         $app->options('/{routes:.*}', function (Request $request, Response $response) {
-            // CORS Pre-Flight OPTIONS Request Handler
-            return $response;
+            return $response->withHeader('Access-Control-Allow-Origin', $_ENV['FRONTEND_URL'])
+                ->withHeader('Access-Control-Allow-Headers', '*')
+                ->withHeader('Access-Control-Allow-Credentials', 'true')
+                ->withHeader('Access-Control-Allow-Methods', 'GET,POST,PUT');
         });
     }
 

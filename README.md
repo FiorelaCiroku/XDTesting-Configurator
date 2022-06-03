@@ -38,10 +38,12 @@ If you wish to contribute:
       ```shell
       npm install
       ```
-3. Open [`server/.env`](./server/.env) and:
-   - Leave blank the field `ROUTES_PREFIX`, i.e.: it should look like the following:
-      ```env
+3. Open `server/.env` and:
+   - Leave blank the field `ROUTES_PREFIX` and add `ENV=development`, i.e.: the file should look like the following:
+      ```shell
+      ENV=development
       ROUTES_PREFIX=
+      # other variables
       ```
    - edit the fields `CLIENT_ID` and `CLIENT_SECRET` with the information provided by the just created GitHub OAuth application. **DO NOT COMMIT THE CHANGES TO THE FILE, KEEP IT ONLY LOCALLY BECAUSE IT CONTAINS SENSITIVE DATA**
 
@@ -61,3 +63,5 @@ If you wish to contribute:
    ```
    npm start
    ```
+
+7. Navigate to [http://localhost:4200](http://localhost:4200)
