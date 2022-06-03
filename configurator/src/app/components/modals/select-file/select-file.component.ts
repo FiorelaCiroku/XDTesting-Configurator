@@ -39,7 +39,8 @@ export class SelectFileComponent implements OnInit {
           return {
             name: nameChunks.join('.'),
             extension,
-            type: fileType?.label || ''
+            type: fileType?.label || '',
+            path: f.path
           };
 
         });

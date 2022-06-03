@@ -37,6 +37,7 @@ import { filterNullUndefined } from '../utils';
 export class ApiService {
 
   readonly $loading = new BehaviorSubject<boolean>(true);
+  readonly baseDir = '.xd-testing';
 
   private repositories?: Repository[];
   private repositoriesEtag?: string;
@@ -51,7 +52,6 @@ export class ApiService {
   private workflowRunsEtag?: string;
   private workflowRuns?: WorkflowRunResponse;
 
-  private baseDir = '.xd-testing';
   private userInputPath = `${this.baseDir}/UserInput.json`;
 
 

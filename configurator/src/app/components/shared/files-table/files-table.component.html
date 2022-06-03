@@ -30,6 +30,7 @@
           <p-columnFilter type="text" field="type" display="menu" class="ms-2"></p-columnFilter>
         </div>
       </th>
+      <th></th>
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-file>
@@ -37,11 +38,16 @@
       <td>{{file.name}}</td>
       <td>{{file.extension}}</td>
       <td>{{file.type}}</td>
+      <td class="text-end">
+        <a [href]="downloadUrl(file)" class="btn btn-outline-secondary btn-sm">
+          <i class="fa-solid fa-download"></i>
+        </a>
+      </td>
     </tr>
   </ng-template>
   <ng-template pTemplate="emptymessage">
     <tr>
-      <td class="text-center" colspan="3">
+      <td class="text-center" colspan="4">
         {{ emptyMessage }}
       </td>
     </tr>

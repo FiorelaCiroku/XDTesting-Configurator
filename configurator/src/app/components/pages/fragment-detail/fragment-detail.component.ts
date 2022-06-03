@@ -141,7 +141,8 @@ export class FragmentDetailComponent {
           return {
             name: nameChunks.join('.'),
             extension,
-            type: fileType?.label || ''
+            type: fileType?.label || '',
+            path: f.path
           };
         });
       }));

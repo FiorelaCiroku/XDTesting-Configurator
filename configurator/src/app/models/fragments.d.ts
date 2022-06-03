@@ -14,6 +14,7 @@ export interface FragmentForm {
 }
 
 export interface FragmentFile {
+  path: string;
   name: string;
   extension?: string;
   type: string;
