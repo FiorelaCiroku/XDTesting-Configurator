@@ -6,7 +6,6 @@
 
 If you wish to contribute:
 - PHP >= 8 ([Windows](https://windows.php.net/download), [Mac](https://formulae.brew.sh/formula/php), [*nix](https://www.php.net/manual/en/install.unix.debian.php))
-- [Composer](https://getcomposer.org/download)
 - [NodeJS + npm](https://nodejs.org)
 
 ### Steps
@@ -29,39 +28,39 @@ If you wish to contribute:
 5. Navigate to [http://localhost:8080](http://localhost:8080)
 
 #### Contribute
-2. Install dependencies:
-   - Open a terminal, `cd` into `server` and run
-      ```shell
-      composer install
-      ```
-   - `cd` into `configurator` and run
-      ```shell
-      npm install
-      ```
-3. Open `server/.env` and:
-   - Leave blank the field `ROUTES_PREFIX` and add `ENV=development`, i.e.: the file should look like the following:
-      ```shell
-      ENV=development
-      ROUTES_PREFIX=
-      # other variables
-      ```
-   - edit the fields `CLIENT_ID` and `CLIENT_SECRET` with the information provided by the just created GitHub OAuth application. **DO NOT COMMIT THE CHANGES TO THE FILE, KEEP IT ONLY LOCALLY BECAUSE IT CONTAINS SENSITIVE DATA**
+2. Install dependencies: open a terminal, `cd` into `configurator` and run
+   ```shell
+   npm install
+   ```
 
-4. Open a terminal, `cd` into `server` and run the following:
+3. Open a terminal, `cd` into `server` and run the following:
    ```
    docker build . -t xd-server
    ```
    This will build the server image of the application
 
-5. Run the server by issuing the following into a terminal:
+4. Run the server by issuing the following into a terminal:
    ```
    docker run -d -p 8080:80 --name xd-server xd-server
    ```
    This will create a new container called `xd-server` which will have its internal port 80 binded to the port 8080 of your machine
 
-6. Open a terminal, `cd` into `configurator` and start the frontend by running the following:
+5. Open a shell in the just started container by issuing the following into a terminal:
+   ```shell
+   docker exec -it xd-server bash
+   ```
+   The shell will open on `/var/www/html` that's where all the server's files are located. Edit `.env` in the following way:
+   - Leave blank the field `ROUTES_PREFIX` and add `ENV=development`; the file should look like the following:
+      ```dotenv
+      ENV=development
+      ROUTES_PREFIX=
+      # other variables
+      ```
+   - edit the fields `CLIENT_ID` and `CLIENT_SECRET` with the information provided by the just created GitHub OAuth application
+
+7. Exit from container's terminal, `cd` into `configurator` and start the frontend by running the following:
    ```
    npm start
    ```
 
-7. Navigate to [http://localhost:4200](http://localhost:4200)
+8. Navigate to [http://localhost:4200](http://localhost:4200)
