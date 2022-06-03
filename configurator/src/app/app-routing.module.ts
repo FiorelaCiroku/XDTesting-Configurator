@@ -92,7 +92,11 @@ const routes: Routes = [
           },
         ],
       }
-    ]
+    ],
+  },
+  {
+    path: '**',
+    redirectTo: '/ontologies'
   }
 ];
 

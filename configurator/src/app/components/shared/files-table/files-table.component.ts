@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChange, ViewChild } from '@angular/core';
-import { FragmentFile } from '../../../models';
+import { FileTypeSpecs, FragmentFile } from '../../../models';
 import { Table } from 'primeng/table';
-import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY } from '../../../constants';
+import { FILE_TYPES, SELECTED_BRANCH_KEY, SELECTED_REPO_KEY } from '../../../constants';
 
 @Component({
   selector: 'config-files-table',
@@ -20,12 +20,15 @@ export class FilesTableComponent implements OnChanges {
   @ViewChild('table', {read: Table}) table?: Table;
   @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
 
-  repository: string | null;
-  branch: string | null;
+  fileTypeSpecs: FileTypeSpecs = FILE_TYPES;
+
+  private readonly _repository: string | null;
+  private readonly _branch: string | null;
+
 
   constructor() {
-    this.repository = localStorage.getItem(SELECTED_REPO_KEY);
-    this.branch = localStorage.getItem(SELECTED_BRANCH_KEY);
+    this._repository = localStorage.getItem(SELECTED_REPO_KEY);
+    this._branch = localStorage.getItem(SELECTED_BRANCH_KEY);
   }
 
 
@@ -55,11 +58,11 @@ export class FilesTableComponent implements OnChanges {
   }
 
   downloadUrl(file: FragmentFile): string {
-    if (!this.branch && !this.repository) {
+    if (!this._branch && !this._repository) {
       return '';
     }
 
-    return `https://raw.githubusercontent.com/${this.repository}/${this.branch}/${file.path}`;
+    return `https://raw.githubusercontent.com/${this._repository}/${this._branch}/${file.path}`;
   }
 
   clear(table: Table): void {

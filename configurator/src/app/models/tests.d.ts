@@ -1,8 +1,12 @@
 import { FileInputFormGroup } from './file-input';
 
+export type TestStatus = 'success' | 'running' | 'error' | 'failed';
 export interface TestDetail {
   id: string;
   type: TestType;
+  status: TestStatus;
+  statusNotes?: string;
+  issue?: string;
   reasoner?: string;
   content: string;
   query?: string;

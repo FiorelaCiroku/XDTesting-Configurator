@@ -30,7 +30,7 @@ export class LoginComponent implements OnDestroy {
         return EMPTY;
       }))
 
-      .pipe(switchMap(() => from( this.router.navigate(['/fragments']) ) ))
+      .pipe(switchMap(() => from( this.router.navigate(['/ontologies']) ) ))
 
       .pipe(catchError((err: HttpErrorResponse) => {
         this.error = err.message;

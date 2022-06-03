@@ -28,18 +28,25 @@ export class SelectFileComponent implements OnInit {
 
     const $sub = this._apiService.listTestFiles(fragment, type)
       .subscribe((files) => {
-        const fileTypes = Object.values(FILE_TYPES);
+        const fileTypes = Object.entries(FILE_TYPES);
         this.files = [];
         this.files = files.map(f => {
           const nameChunks = f.name.split('.');
           const extension = nameChunks.splice(-1, 1)[0];
           const pathChunks = f.path.split('/');
-          const fileType = fileTypes.find(ft => ft.folder === pathChunks[pathChunks.length - 2]);
+
+          let fileType: FileTypes = 'query';
+
+          for (const [ft, spec] of fileTypes) {
+            if (spec.folder === pathChunks[pathChunks.length - 2]) {
+              fileType = ft as FileTypes;
+            }
+          }
 
           return {
             name: nameChunks.join('.'),
             extension,
-            type: fileType?.label || '',
+            type: fileType,
             path: f.path
           };
 

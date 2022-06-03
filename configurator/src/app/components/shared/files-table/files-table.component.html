@@ -27,7 +27,18 @@
       <th>
         <div class="d-flex justify-content-start align-items-center">
           Type
-          <p-columnFilter type="text" field="type" display="menu" class="ms-2"></p-columnFilter>
+          <p-columnFilter class="ms-2" field="status" matchMode="in" display="menu" [showMatchModes]="false"
+                          [showOperator]="false" [showAddButton]="false">
+            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+              <div class="d-flex align-items-center mb-1" *ngFor="let option of fileTypeSpecs | keyvalue">
+                <p-checkbox name="status" [ngModel]="value"  [value]="option.key" [inputId]="option.key"
+                            (onChange)="filter($event.checked)"></p-checkbox>
+                <label class="ms-2" for="{{option.key}}">
+                  {{ option.value.label }}
+                </label>
+              </div>
+            </ng-template>
+          </p-columnFilter>
         </div>
       </th>
       <th></th>
@@ -37,7 +48,7 @@
     <tr (click)="onRowClicked.emit(file)">
       <td>{{file.name}}</td>
       <td>{{file.extension}}</td>
-      <td>{{file.type}}</td>
+      <td>{{ $any(fileTypeSpecs)[file.type].label }}</td>
       <td class="text-end">
         <a [href]="downloadUrl(file)" class="btn btn-outline-secondary btn-sm">
           <i class="fa-solid fa-download"></i>

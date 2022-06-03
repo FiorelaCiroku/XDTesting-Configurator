@@ -190,7 +190,8 @@ export class TestCrudComponent implements OnDestroy {
     let updateValue: Omit<TestDetail, 'id'> = {
       type: formValue.type || 'INFERENCE_VERIFICATION',
       content: formValue.content || '',
-      reasoner: formValue.reasoner
+      reasoner: formValue.reasoner,
+      status: 'running'
     };
 
     lastValueFrom(concat($queryFileUpload, $dataFileUpload, $expectedResultsFileUpload)
@@ -273,9 +274,13 @@ export class TestCrudComponent implements OnDestroy {
         return EMPTY;
       }))
       .subscribe(([fragment, testDetail]) => {
+        if (testDetail?.status === 'running') {
+          this.initErrorMsg = 'You can\'t edit a running test. Wait until it has finished running';
+          return;
+        }
+
         this.fragment = fragment;
         this.test = testDetail;
-
         if (testDetail) {
           this._updateFormGroup(testDetail);
         }

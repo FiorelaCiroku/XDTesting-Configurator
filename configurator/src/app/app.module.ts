@@ -41,6 +41,8 @@ import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.com
 import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
 import { TestDocsComponent } from './components/pages/docs/test-docs.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { TextDetailsComponent } from './components/modals/text-details/text-details.component';
 
 
 @NgModule({
@@ -77,6 +79,7 @@ import { TooltipModule } from 'primeng/tooltip';
     FileInputDirective,
      FragmentDocsComponent,
      TestDocsComponent,
+     TextDetailsComponent,
   ],
   imports: [
     // Angular
@@ -98,6 +101,7 @@ import { TooltipModule } from 'primeng/tooltip';
     InputTextModule,
     TableModule,
     TooltipModule,
+    MultiSelectModule,
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true},

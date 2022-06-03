@@ -1,4 +1,5 @@
 import { TestDetail } from './tests';
+import { FileTypes } from './file-types';
 
 export interface Fragment {
   name: string;
@@ -17,6 +18,6 @@ export interface FragmentFile {
   path: string;
   name: string;
   extension?: string;
-  type: string;
+  type: FileTypes;
 }
 

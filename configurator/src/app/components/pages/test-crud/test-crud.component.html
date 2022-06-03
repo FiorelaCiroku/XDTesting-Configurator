@@ -1,17 +1,15 @@
-<ng-container *ngIf="initErrorMsg">
-  <div class="alert alert-danger">
-    <span *ngIf="initErrorMsg">{{initErrorMsg}}</span>
-  </div>
-</ng-container>
+<config-alert [dismissable]="false" [isOpen]="initErrorMsg && !saved" type="danger">
+  {{initErrorMsg}}
+</config-alert>
 
-<ng-container *ngIf="!initErrorMsg && !saved && fragment">
+<ng-container *ngIf="!saved && fragment">
   <h1 class="mb-0">{{ test ? 'Edit' : 'Create'}} Test Case {{ test ? test.id : '' }}</h1>
   <h4 class="mb-5">{{fragment?.name}}</h4>
 </ng-container>
 
 <config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert" #alert>
   <ng-container *ngIf="saved">
-    Test case successfully saved
+    Test case successfully saved.<br>The test will now be started
     <br>
     <a [routerLink]="test ? '../..' : '..'" class="btn btn-link p-0 text-decoration-none">
       <i class="fa-solid fa-angle-left"></i>
@@ -23,7 +21,17 @@
   </ng-container>
 </config-alert>
 
-<ng-container *ngIf="!initErrorMsg && !saved && fragment">
+<ng-container *ngIf="!saved && fragment">
+  <config-alert [dismissable]="false"
+                [isOpen]="(test?.status === 'error' || test?.status === 'failed') && (test?.statusNotes || test?.issue)"
+                type="danger">
+    <p>Test result: <b>{{ test?.status | titlecase }}</b></p>
+    <p *ngIf="test?.statusNotes">{{ test?.statusNotes }}</p>
+    <p *ngIf="test?.issue">
+      See <a [href]="test?.issue">GitHub issue</a> for additional details
+    </p>
+  </config-alert>
+
   <form [formGroup]="fg" (submit)="save()" novalidate>
     <h5 class="font-weight-bold">Details</h5>
 
