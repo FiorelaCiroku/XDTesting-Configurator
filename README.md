@@ -10,8 +10,8 @@ If you wish to contribute:
 
 ### Steps
 1. Create a new OAuth application on your GitHub account as described [here](https://docs.github.com/en/developers/apps/building-oauth-apps/creating-an-oauth-app). In `Authorization callback URL` make sure to insert:
-   - `http://localhost:8080/auth` if you want to only run the application (section [Run the application](#run-the-application)
-   - `http://localhost:4200/auth` if you want to contribute (section [Contribute](#contribute)
+   - `http://localhost:8080/auth` if you want to only run the application (section [Run the application](#run-the-application))
+   - `http://localhost:4200/auth` if you want to contribute (section [Contribute](#contribute))
 
 #### Run the application
 2. Open [`server/.env.example`](./server/.env.example) and edit the fields `CLIENT_ID` and `CLIENT_SECRET` with the information provided by the just created GitHub OAuth application. **DO NOT COMMIT THE CHANGES TO THE FILE, KEEP IT ONLY LOCALLY BECAUSE IT CONTAINS SENSITIVE DATA**
