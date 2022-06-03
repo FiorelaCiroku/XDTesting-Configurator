@@ -9,24 +9,22 @@ import { Component } from '@angular/core';
       <a routerLink="/docs">Main Docs Page</a>
     </div>
 
-    <p>In this section is explained how to use the ontology section of the tool.</p>
+    <p>In this section you will find the necessary information to use the fragment section of the XDTesting tool.</p>
 
     <h3>Main page</h3>
     <p>The main page shows a filterable list of the defined fragments. The list presents two columns:</p>
     <ul>
       <li>
-        <b>Ontology Fragment Name</b>: the name given to the fragment when ti hsa been defined
+        <b>Ontology Fragment Name</b>: The name of the ontology fragment
       </li>
       <li>
-        <b>Ontology Name</b>: the name of the ontology
+        <b>Ontology Name</b>: The name of the ontology module that the fragment belongs to.
       </li>
     </ul>
 
     <p>
-      On the upper-right corner of the table it is present a free text search in which it is possible to write any text
-      to search in the table. If you want to filter on one or more columns, you can click on the <i class="fa-solid fa-filter"></i>
-      icon next to column's name; it will open a popup in which to insert the text against which filter the data of the
-      column.
+      On the upper-right corner of the table it is present a free text search which you can use it to search items in the table. If you want to filter on one or more columns, you can click on the <i class="fa-solid fa-filter"></i>
+      icon next to column's name; it will open a popup in which to insert the text against which filter the data of the column.
     </p>
 
     <h3>Fragment Creation</h3>
@@ -41,8 +39,8 @@ import { Component } from '@angular/core';
     </p>
 
     <p class="text-danger">
-      <b>NOTE</b>: fragment's name must be unique for the same ontology, i.e.: you can't define two fragments with the
-      same name for the same ontology.
+      <b>NOTE</b>: The fragment's name must be unique for the same ontology, i.e.: you can't define two different fragments with the
+      same name for the same ontology module.
     </p>
 
     <p>
@@ -59,11 +57,11 @@ import { Component } from '@angular/core';
     </p>
 
 
-    <h3>Fragment Detail</h3>
-    <p>The page will show two tables:</p>
+    <h3>Fragment details</h3>
+    <p>The page shows two tables:</p>
     <ul>
-      <li>the first one will show the uploaded data along with the file name and the type of the data</li>
-      <li>the second one will show the defined tests for the considered fragment</li>
+      <li>The second table shows the defined tests for the considered fragment</li>
+      <li>The first table shows the uploaded data along with the file name and the type of the data</li>
     </ul>
     <p>Both are filterable as described in <b>Main Page</b> section.</p>
 
@@ -72,7 +70,7 @@ import { Component } from '@angular/core';
       <button class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-pencil"></i></button> button, you will be able
       to edit already defined tests, while clicking on
       <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash-alt"></i></button> button you will delete
-      existing tests.
+      existing tests from the list, but not from the GitHub repository. 
     </p>
 
     <p>
