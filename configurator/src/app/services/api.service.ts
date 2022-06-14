@@ -585,7 +585,8 @@ export class ApiService {
 
       ontologies.push({
         url: apiResult.data,
-        name: ontology.name
+        name: ontology.name,
+        userDefined: true
       });
 
       const userInput: UserInput = {
@@ -611,6 +612,34 @@ export class ApiService {
 
         const userInput: UserInput = {
           fragments,
+          ontologies
+        };
+
+        return this._updateUserInput(JSON.stringify(userInput, null, 2), `Removed ontology ${name}`, this.userInputSha);
+      }))
+      .pipe(map(() => ({success: true})))
+      .pipe(catchError((err: HttpErrorResponse) => {
+        return of({success: false, message: err.message});
+      }));
+  }
+
+  updateOntologies(updatedOntologies: Ontology[]): Observable<ApiResult> {
+    return this.listOntologies()
+      .pipe(switchMap(ontologies => {
+        const ontoMap = Object.fromEntries(ontologies.map(o => [o.url, o]));
+
+        for (let i = 0; i < updatedOntologies.length; i++) {
+          const ontology = updatedOntologies[i];
+
+          if (ontology.url && ontoMap[ontology.url]) {
+            ontoMap[ontology.url] = ontology;
+          }
+        }
+
+        ontologies = Object.values(ontoMap);
+
+        const userInput: UserInput = {
+          fragments: this.userInput?.fragments || [],
           ontologies
         };
 

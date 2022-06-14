@@ -80,6 +80,7 @@ import { TextDetailsComponent } from './components/modals/text-details/text-deta
      FragmentDocsComponent,
      TestDocsComponent,
      TextDetailsComponent,
+     SelectOntologyComponent,
   ],
   imports: [
     // Angular

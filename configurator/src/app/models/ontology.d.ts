@@ -1,6 +1,9 @@
 export interface Ontology {
   name: string;
   url?: string;
+  userDefined?: boolean;
+  parsed?: boolean;
+  ignored?: boolean;
 }
 
 export interface OntologyForm {

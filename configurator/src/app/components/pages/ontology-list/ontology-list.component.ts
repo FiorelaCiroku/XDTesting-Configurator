@@ -4,6 +4,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { ApiService } from '../../../services';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { UploadOntologyComponent } from '../../modals';
+import { SelectOntologyComponent } from '../../modals/select-ontology/select-ontology.component';
 
 @Component({
   selector: 'config-ontology-list',
@@ -77,8 +78,29 @@ export class OntologyListComponent {
         return of([]);
       }))
       .subscribe((ontologies) => {
-        this.ontologies = ontologies;
+        const toSelect = ontologies.filter(o => !o.userDefined && !o.parsed && !o.ignored);
+        this.ontologies = ontologies.filter(o => o.userDefined || (o.parsed && !o.ignored));
+
+        this._showOntologySelectionModal(toSelect);
         $sub.unsubscribe();
       });
+  }
+
+  private _showOntologySelectionModal(toSelect: Ontology[]): void {
+    if (toSelect.length === 0) {
+      return;
+    }
+
+    const ref = this.dialogService.open(SelectOntologyComponent, {
+      header: 'New ontologies found',
+      data: {
+        toSelect
+      }
+    });
+
+    const $sub = ref.onClose.subscribe(() => {
+      this._init();
+      $sub.unsubscribe();
+    });
   }
 }
