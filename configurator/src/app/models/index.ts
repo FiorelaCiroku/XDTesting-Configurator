@@ -6,5 +6,6 @@ export * from './github';
 export * from './ontology';
 export * from './recursive-partial';
 export * from './route-params';
+export * from './stats';
 export * from './tests';
 export * from './user-input';

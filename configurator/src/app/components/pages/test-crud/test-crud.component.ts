@@ -163,6 +163,8 @@ export class TestCrudComponent implements OnDestroy {
       return;
     }
 
+    console.log(this.fg.valid, this.fg.errors);
+
     if (!this.fg.valid) {
       markAllAsTouchedOrDirty(this.fg);
       markAllAsTouchedOrDirty(this.fg, true);
@@ -404,6 +406,7 @@ export class TestCrudComponent implements OnDestroy {
     const countExpectedResults = filledDataRows.filter(r => r.expectedResult).length;
     const countDataRows = filledDataRows.length;
 
+    console.log({type});
 
     switch (type) {
       case 'INFERENCE_VERIFICATION':

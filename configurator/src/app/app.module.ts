@@ -24,7 +24,6 @@ import {
   UploadOntologyComponent
 } from './components/modals';
 import {
-  ActionsComponent,
   CreateFragmentComponent,
   TestCrudComponent, FragmentDetailComponent,
   FragmentListComponent,
@@ -43,6 +42,9 @@ import { TestDocsComponent } from './components/pages/docs/test-docs.component';
 import { TooltipModule } from 'primeng/tooltip';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TextDetailsComponent } from './components/modals/text-details/text-details.component';
+import { DashboardComponent } from './components/pages/dashboard/dashboard.component';
+import { SelectOntologyComponent } from './components/modals/select-ontology/select-ontology.component';
+import { NgChartsModule } from 'ng2-charts';
 
 
 @NgModule({
@@ -51,7 +53,6 @@ import { TextDetailsComponent } from './components/modals/text-details/text-deta
     LayoutComponent,
 
     // Pages
-    ActionsComponent,
     CreateFragmentComponent,
     TestCrudComponent,
     FragmentDetailComponent,
@@ -78,6 +79,7 @@ import { TextDetailsComponent } from './components/modals/text-details/text-deta
     // Directives
     FileInputDirective,
      FragmentDocsComponent,
+     DashboardComponent,
      TestDocsComponent,
      TextDetailsComponent,
      SelectOntologyComponent,
@@ -103,6 +105,7 @@ import { TextDetailsComponent } from './components/modals/text-details/text-deta
     TableModule,
     TooltipModule,
     MultiSelectModule,
+    NgChartsModule,
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true},

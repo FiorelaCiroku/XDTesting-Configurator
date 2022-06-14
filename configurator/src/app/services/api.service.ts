@@ -6,7 +6,7 @@ import {
   CreateOrUpdateFileResponse,
   Fragment,
   Repository, ShortBranch,
-  TestDetail, WorkflowRunResponse, UserInput, FileTypes, Ontology, OntologyForm
+  TestDetail, UserInput, FileTypes, Ontology, OntologyForm
 } from '../models';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import {
@@ -48,9 +48,6 @@ export class ApiService {
 
   private branchesEtag?: string;
   private branches?: ShortBranch[];
-
-  private workflowRunsEtag?: string;
-  private workflowRuns?: WorkflowRunResponse;
 
   private userInputPath = `${this.baseDir}/UserInput.json`;
 
@@ -152,25 +149,6 @@ export class ApiService {
       .pipe(map((results: ContentFile[][]): ContentFile[] => {
         return results.flat();
       }));
-  }
-
-  listWorkflows(): Observable<WorkflowRunResponse> {
-    const url = ApiService.getUrl('/repos/{repo}/actions/runs');
-
-    if (!url) {
-      return EMPTY;
-    }
-
-    const defaultResponse: WorkflowRunResponse = {total_count: 0, workflow_runs: []};
-    const headers = ApiService.getDefaultHeaders(this.workflowRunsEtag);
-
-    return this._http.get<WorkflowRunResponse>(url, { observe: 'response', headers })
-      .pipe(map((res) => {
-        this.workflowRunsEtag = res.headers.get('etag')?.replace('W/', '') || '';
-        this.workflowRuns = res.body || defaultResponse;
-        return this.workflowRuns;
-      }))
-      .pipe(catchError(() => of(this.workflowRuns || defaultResponse)));
   }
 
   getFragments(): Observable<Fragment[]> {

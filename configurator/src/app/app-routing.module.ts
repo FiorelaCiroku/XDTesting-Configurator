@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationService } from './services';
 import {
-  ActionsComponent,
   CreateFragmentComponent,
   TestCrudComponent, FragmentDetailComponent,
   FragmentListComponent,
@@ -14,12 +13,13 @@ import { DocsComponent } from './components/pages/docs/docs.component';
 import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.component';
 import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
 import { TestDocsComponent } from './components/pages/docs/test-docs.component';
+import { DashboardComponent } from './components/pages/dashboard/dashboard.component';
 
 const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'ontologies'
+    redirectTo: 'dashboard'
   },
   {
     path: 'login',
@@ -37,8 +37,8 @@ const routes: Routes = [
     canActivate: [AuthenticationService],
     children: [
       {
-        path: 'actions',
-        component: ActionsComponent
+        path: 'dashboard',
+        component: DashboardComponent
       },
       {
         path: 'ontologies',
@@ -96,7 +96,7 @@ const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '/ontologies'
+    redirectTo: '/dashboard'
   }
 ];
 

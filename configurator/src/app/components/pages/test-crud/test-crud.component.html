@@ -68,7 +68,8 @@
            collected by means of an expert- or data-driven story">
         </i>
       </label>
-      <textarea id="content" class="form-control" formControlName="content" configValidationFeedback required></textarea>
+      <textarea id="content" class="form-control" formControlName="content" configValidationFeedback
+                [required]="fg?.controls?.type?.value === 'ERROR_PROVOCATION'"></textarea>
     </div>
 
 

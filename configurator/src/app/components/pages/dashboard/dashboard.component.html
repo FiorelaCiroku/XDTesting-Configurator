@@ -1,0 +1,40 @@
+<h1>Dashboard</h1>
+
+<div class="row px-3 mt-5">
+  <div class="col-12 col-md-9 row flex-column">
+    <div class="col-12 row">
+      <div *ngFor="let stat of statusStats | keyvalue"
+           class="col mx-2 p-3 border border-{{$any(colors)[stat.key]}} rounded text-{{$any(colors)[stat.key]}} d-flex flex-column align-items-center">
+        <i [class]="$any(icons)[stat.key]"></i>
+        {{ stat.key | titlecase }}
+        <strong class="display-5" style="font-weight: bolder">{{ stat.value }}</strong>
+      </div>
+    </div>
+
+    <div class="my-3 d-block" *ngIf="lineData">
+      <canvas baseChart [data]="lineData" [legend]="true" [options]="{responsive: true}" [type]="'line'"></canvas>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-3 d-flex flex-column">
+    <div class="row">
+      <div class="col-12 col-md-3 text-center text-md-start">
+        <i class="fa-solid fa-cubes" style="font-size: 24px"></i>
+      </div>
+      <div class="col-12 col-md-9">
+        <h5 class="text-center text-md-start">Ontology Modules</h5>
+        <h3 class="text-center text-md-start">{{ ontologies }}</h3>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-12 col-md-3 text-center text-md-start">
+        <i class="fa-solid fa-puzzle-piece" style="font-size: 24px"></i>
+      </div>
+      <div class="col-12 col-md-9">
+        <h5 class="text-center text-md-start">Ontology Fragments</h5>
+        <h3 class="text-center text-md-start">{{ fragments }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
