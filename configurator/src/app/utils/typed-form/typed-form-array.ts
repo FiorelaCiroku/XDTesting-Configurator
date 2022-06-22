@@ -2,6 +2,10 @@ import { AbstractControlOptions, AsyncValidatorFn, FormArray, ValidatorFn } from
 import { TypedAbstractControl, ControlResetObject, ControlResetValue, TypedControl } from '../../models/typed-form';
 import { Observable } from 'rxjs';
 
+/**
+ * Extends form array to add type support
+ * @inheritdoc
+ */
 export class TypedFormArray<T = never> extends FormArray implements TypedAbstractControl<T[]> {
 
   override readonly value!: T | null;

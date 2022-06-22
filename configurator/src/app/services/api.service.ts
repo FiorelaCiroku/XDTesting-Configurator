@@ -56,6 +56,12 @@ export class ApiService {
   }
 
 
+  /**
+   * Creates default header for GitHub
+   * @see {@link https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api#conditional-requests}
+   * @param etag
+   * @returns
+   */
   private static getDefaultHeaders(etag?: string): {'If-None-Match'?: string} {
     if (etag) {
       return {'If-None-Match': etag};
@@ -64,7 +70,15 @@ export class ApiService {
     return {};
   }
 
+  /**
+   * Builds URL from a template in the form `/{repo}/rest/of/url`
+   * @param relativeUrl Relative URL without host with placeholders. E.g.: `/{repo}/contents/my-file.json`
+   * @param repo Repository to use in the form `username/repo-name`
+   * @param branch Branch to use
+   * @returns URL parsed and substituted with actual value
+   */
   private static getUrl(relativeUrl: string, repo?: string | null, branch?: string | null): string | null {
+    // check if the method is given a repo and branch otherwise get from localStorage
     repo = repo || localStorage.getItem(SELECTED_REPO_KEY);
     branch = branch || localStorage.getItem(SELECTED_BRANCH_KEY);
 
@@ -72,41 +86,65 @@ export class ApiService {
       return null;
     }
 
+    // build the url appending baseUrl
     relativeUrl = baseUrl + relativeUrl.replace(/(?:\{user}\/)?\{repo}/, repo);
+
+    // add branch name
     relativeUrl += `?branch=${branch}`;
 
     return relativeUrl;
   }
 
 
+  /**
+   * Get list of user-owned repository
+   * Depending on supplied scope when requesting token, it will retrieve only public or also private repositories
+   * @returns `Observable` of array of `Repository`
+   */
   listRepos(): Observable<Repository[]> {
     const headers = ApiService.getDefaultHeaders(this.repositoriesEtag);
 
     return this._http.get<Repository[]>(`${baseUrl}/user/repos?type=all`, {observe: 'response', headers})
       .pipe(map(res => {
+        // per https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api#conditional-requests
+        // save ETag and list of repositories
         this.repositoriesEtag = res.headers.get('etag')?.replace('W/', '') || '';
         this.repositories = res.body || [];
         return this.repositories;
       }))
       .pipe(catchError(() => {
+        // 304 responses make HttpClient throw error and thus, it must be handled this way
         return of(this.repositories || []);
       }));
   }
 
+  /**
+   * Get list of branches for repository
+   * @param repository in the form of `username/repo-name`
+   * @returns `Observable` of list of branches
+   */
   listBranches(repository: string): Observable<ShortBranch[]> {
     const headers = ApiService.getDefaultHeaders(this.branchesEtag);
 
     return this._http.get<ShortBranch[]>(`${baseUrl}/repos/${repository}/branches`, {observe: 'response', headers})
       .pipe(map(res => {
+        // per https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api#conditional-requests
+        // save ETag and list of branches
         this.branchesEtag = res.headers.get('etag')?.replace('W/', '') || '';
         this.branches = res.body || [];
         return this.branches;
       }))
       .pipe(catchError(() => {
+        // 304 responses make HttpClient throw error and thus, it must be handled this way
         return of(this.branches || []);
       }));
   }
 
+  /**
+   * Get list of files for a specified directory
+   * @param path path to the directory relative to the root of the repository
+   * @returns `Observable` of list of files
+   */
   listFiles(path?: string): Observable<ContentFile[]> {
     const listUrl = `/repos/{repo}/contents/${path || ''}`;
     const url = ApiService.getUrl(listUrl);
@@ -117,45 +155,68 @@ export class ApiService {
 
     return this._http.get<ContentFile[]>(url)
       .pipe(catchError((err: HttpErrorResponse) => {
+        // if directory is not found, simply return an empty array
         if (err.status === 404) {
           return of([]);
         }
 
+        // else, throw the error
         return throwError(() => err);
       }));
   }
 
+  /**
+   * List files for specified test of a specified fragment.
+   * NOTE: files are divided by type in subdirectories
+   * @param fragment
+   * @param type Optional filter for file type
+   * @returns `Observable` of list of files
+   */
   listTestFiles(fragment?: Fragment, type?: FileTypes): Observable<ContentFile[]> {
+    // fragment is required but declared as optional in method's signature for convenience
     if (!fragment) {
       return throwError(() => 'Empty fragment name');
     }
 
-    const baseFragmentUrl = `.xd-testing/${fragment.ontologyName}/${fragment.name}`;
+    // build relative base URL
+    const baseFragmentUrl = `${this.baseDir}/${fragment.ontologyName}/${fragment.name}`;
     let urls: string[] = [];
 
     if (type) {
+      // if is given a type to filter on, let's just add the corresponding URL of the directory
       urls.push(baseFragmentUrl + '/' + FILE_TYPES[type].folder);
     } else {
+      // add URLs of all subdirectories where files of different kind lies
       urls = Object.values(FILE_TYPES).map(ft => baseFragmentUrl + '/' + ft.folder)
         .filter(filterNullUndefined)
         .filter(u => !!u);
     }
 
     if (!urls.length) {
+      // if there is no URLs in array, throw an error
+      // Should fall in this case if FILE_TYPES is an empty object
       return throwError(() => 'Error retrieving files');
     }
 
+    // execute all requests in parallel and return an array containing all the results of the API calls
     return forkJoin(urls.map(url => this.listFiles(url)))
       .pipe(map((results: ContentFile[][]): ContentFile[] => {
+        // flatten the result to have a single array of files
         return results.flat();
       }));
   }
 
+  /**
+   * List fragments defined
+   * It will read `UserInput.json` and return the list of fragment defined in there
+   * @returns `Observable` of list of `Fragment`s
+   */
   getFragments(): Observable<Fragment[]> {
     const headers = ApiService.getDefaultHeaders(this.userInputEtag);
     const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
 
     if (!url) {
+      // `EMPTY` stops all next observables
       return EMPTY;
     }
 
@@ -165,13 +226,20 @@ export class ApiService {
         return this.userInput.fragments || [];
       }))
       .pipe(catchError(() => {
+        // 304 responses make HttpClient throw error and thus, it must be handled this way
         return of(this.userInput?.fragments || []);
       }));
   }
 
+  /**
+   * Get a single fragment by name
+   * @param name Fragment's name
+   * @returns `Observable` of requested `Fragment`
+   */
   getFragment(name: string): Observable<Fragment> {
     return this.getFragments()
       .pipe(map(fragments => {
+        // search for fragment
         const filteredFragments = fragments.filter(f => f.name === name);
 
         if (filteredFragments.length === 0) {
@@ -182,87 +250,128 @@ export class ApiService {
       }));
   }
 
+  /**
+   * Creates a new fragment.
+   * If fragment name is already present for the ontology, throws an error
+   * @param fragment Fragment definition
+   * @returns `Observable` of `ApiResult`
+   */
   createFragment(fragment: Fragment): Observable<ApiResult> {
     return this.getFragments()
       .pipe(switchMap(fragments => {
+        // Fragment can have the same name for different ontologies
+        // to have unique naming it's been appended the ontology name
         const names = fragments.map(f => `${f.name}_${f.ontologyName}`);
+
+        // if fragment name is found for the same ontology, throw an error
         if (names.includes(`${fragment.name}_${fragment.ontologyName}`)) {
           return throwError(() => new HttpErrorResponse({error: 'Fragment already exists'}));
         }
 
+        // push fragment in the array
         fragments.push(fragment);
 
+        // update fragments
         return this._updateFragments(fragments, `Created fragment ${fragment.name}`, this.userInputSha);
       }))
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true})))
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.error});
       }));
   }
 
-  updateFragmentTest(fragmentName: string, testDetail: Omit<TestDetail, 'id'>, testId?: string): Observable<ApiResult<TestDetail>> {
+  /**
+   * Update test for Fragment
+   * @param fragmentName
+   * @param testDetail Test specification except id
+   * @param testId Test id
+   * @returns `Observable` of `ApiResult` having in `data` property the `TestDetail` specification
+   */
+  updateFragmentTest(fragment: Fragment, testDetail: Omit<TestDetail, 'id'>, testId?: string): Observable<ApiResult<TestDetail>> {
     return this.getFragments()
       .pipe(switchMap(fragments => {
-        let fragment;
+        // Fragment can have the same name for different ontologies
+        // to have unique naming it's been appended the ontology name
+        const names = fragments.map(f => `${f.name}_${f.ontologyName}`);
 
-        for (let i = 0; i < fragments.length; i++) {
-          if (fragments[i].name === fragmentName) {
-            fragment = fragments[i];
-            break;
-          }
-        }
+        // Search for fragment using the mapping above
+        const indexToUpdate = names.indexOf(`${fragment.name}_${fragment.ontologyName}`);
 
-        if (!fragment) {
+        // If fragment isn't found, index == -1
+        if (indexToUpdate === -1) {
           return throwError(() => new HttpErrorResponse({error: 'Fragment not found'}));
         }
 
-        if (!fragment.tests) {
-          fragment.tests = [];
-        }
+        // Get fragment
+        const toUpdate = fragments[indexToUpdate];
 
+        // if there's no test defined, create an empty array
+        if (!toUpdate.tests) {
+          toUpdate.tests = [];
+        }
 
         let newTest: TestDetail;
 
+        // If the method is not given a test id, it should create a new test, else it should update the
+        // test with the provided testId
         if (!testId) {
+          // Get the id prefix from the definitions and build a regex to grab the last id number
           const prefix = TEST_TYPE_DEFINITIONS[testDetail.type].idPrefix;
           const re = new RegExp(`^${prefix}`);
           let lastId = 0;
 
-          for (const test of fragment.tests) {
+          // grab the last id number
+          for (const test of toUpdate.tests) {
             if (!test.id.startsWith(prefix)) {
               continue;
             }
 
+            // test.id is build like
+            // TEST_TYPE_DEFINITIONS[testDetail.type].idPrefix + incrementingNumber
+            // Removing the first part it can be obtained the last incrementing int
             const temp = parseInt(test.id.replace(re, ''), 10);
             if (test.type === testDetail.type && temp > lastId) {
               lastId = temp;
             }
           }
 
+          // Create a new test definition with the calculated id and push into the array of tests
+          // Spread operator used to not modify the original object
+          // Also, id is padded at the beginning with zeros to normalize it to 3 digits
           newTest = {...testDetail, id: prefix + (lastId + 1).toString().padStart(3, '0')};
-          fragment.tests.push(newTest);
+          toUpdate.tests.push(newTest);
         }
         else {
           let index: number | undefined;
 
-          for (let i = 0; i < fragment.tests.length; i++) {
-            const test = fragment.tests[i];
+          // get the index of the test
+          for (let i = 0; i < toUpdate.tests.length; i++) {
+            const test = toUpdate.tests[i];
+
+            // check for test type and id
             if (test.type === testDetail.type && test.id === testId) {
               index = i;
               break;
             }
           }
 
+          // if test is not found, index is undefined
           if (index === undefined) {
             return throwError(() => 'Test id not found');
           }
 
-          const oldTest = fragment.tests[index];
+          // get and update the old test
+          const oldTest = toUpdate.tests[index];
+          // Spread operator used to not modify the original object
           newTest = {...testDetail, id: oldTest.id};
-          fragment.tests.splice(index, 1, newTest);
+          toUpdate.tests.splice(index, 1, newTest);
         }
 
-        return this._updateFragments(fragments, `Updated fragment ${fragmentName}`,  this.userInputSha)
+        return this._updateFragments(fragments, `Updated fragment ${fragment.name}`,  this.userInputSha)
           .pipe(map(() => newTest));
       }))
 

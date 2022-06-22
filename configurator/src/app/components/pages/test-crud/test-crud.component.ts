@@ -229,7 +229,7 @@ export class TestCrudComponent implements OnDestroy {
           updateValue.data = updateValue.data?.trim();
           updateValue.expectedResults = updateValue.expectedResults?.trim();
 
-          return this._apiService.updateFragmentTest(fragment.name, updateValue, this.test?.id);
+          return this._apiService.updateFragmentTest(fragment, updateValue, this.test?.id);
         })
       )).finally(() => this._toggleDisable())
       .then(result => {

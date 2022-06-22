@@ -3,6 +3,10 @@ import { TypedAbstractControl, TypedFormGroupModel, ControlResetObject } from '.
 import { Observable } from 'rxjs';
 import { RecursivePartial } from '../../models';
 
+/**
+ * Extends FormGroup to add typings
+ * @inheritdoc
+ */
 export class TypedFormGroup<T = never> extends FormGroup implements TypedAbstractControl<T> {
 
   override readonly value!: T | null;

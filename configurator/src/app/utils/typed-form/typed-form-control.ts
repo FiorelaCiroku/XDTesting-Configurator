@@ -2,6 +2,10 @@ import { AsyncValidatorFn, FormControl, FormControlOptions, ValidatorFn } from '
 import { TypedAbstractControl } from '../../models/typed-form';
 import { Observable } from 'rxjs';
 
+/**
+ * Extends FormControl to add typings
+ * @inheritdoc
+ */
 export class TypedFormControl<T = never> extends FormControl implements TypedAbstractControl<T> {
 
   override readonly defaultValue!: T | null;
