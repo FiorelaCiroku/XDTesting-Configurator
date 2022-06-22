@@ -27,7 +27,7 @@ import { baseUrl } from '../../environments/environment';
 import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY, TEST_TYPE_DEFINITIONS, FILE_TYPES } from '../constants';
 import { Router } from '@angular/router';
 import * as moment from 'moment';
-import { encode } from 'js-base64';
+import { encode, decode } from 'js-base64';
 import { filterNullUndefined } from '../utils';
 
 
@@ -220,6 +220,7 @@ export class ApiService {
       return EMPTY;
     }
 
+    // Get list of fragments from UserInput.json
     return this._http.get<ContentFile>(url, {observe: 'response', headers})
       .pipe(map(res => {
         this.userInput = this._parseUserInput(res);
@@ -234,16 +235,19 @@ export class ApiService {
   /**
    * Get a single fragment by name
    * @param name Fragment's name
+   * @param ontologyName Name of the ontology the fragment belongs to
    * @returns `Observable` of requested `Fragment`
    */
-  getFragment(name: string): Observable<Fragment> {
+  getFragment(name: string, ontologyName: string): Observable<Fragment> {
+    // Get fragment by retrieving current UserInput.json and filtering over fragment and ontology name
+    // NOTE: fragment and ontology name should be unique
     return this.getFragments()
       .pipe(map(fragments => {
         // search for fragment
-        const filteredFragments = fragments.filter(f => f.name === name);
+        const filteredFragments = fragments.filter(f => f.name === name && f.ontologyName === ontologyName);
 
         if (filteredFragments.length === 0) {
-          throw `No fragments found with name ${name}`;
+          throw `No fragments found with name ${name} belonging to ontology ${ontologyName}`;
         } else {
           return filteredFragments[0];
         }
@@ -289,7 +293,7 @@ export class ApiService {
    * @param fragmentName
    * @param testDetail Test specification except id
    * @param testId Test id
-   * @returns `Observable` of `ApiResult` having in `data` property the `TestDetail` specification
+   * @returns `Observable` of `ApiResult` having in `data` the `TestDetail` specification
    */
   updateFragmentTest(fragment: Fragment, testDetail: Omit<TestDetail, 'id'>, testId?: string): Observable<ApiResult<TestDetail>> {
     return this.getFragments()
@@ -375,43 +379,66 @@ export class ApiService {
           .pipe(map(() => newTest));
       }))
 
+      // build ApiResult to return
       .pipe(map((data): ApiResult<TestDetail> => ({success: true, data}) ))
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.error});
       }));
   }
 
+
+  /**
+   * Uploads fragment definition file (i.e.: .owl file)
+   * @param dataFile File to upload
+   * @param fragment Reference fragment
+   * @returns Observable of ApiResult having in `data` the URL of the uploaded file
+   */
   uploadFragmentFile(dataFile?: File, fragment?: Fragment): Observable<ApiResult<string>> {
     if (!dataFile) {
+      // if dataFile is not provided just return a successful response
       return of({success: true});
     }
 
+    // get file name
     let name = dataFile.name;
 
+    // fragment is required but declared as optional in method's signature for convenience
     if (!fragment) {
       return throwError(() => 'Fragment not provided');
     }
 
+    // get file content and list fragment files in parallel using zip
     return zip(from(dataFile.text()), this.listFiles(`${this.baseDir}/${fragment.ontologyName}/${fragment.name}`))
       .pipe(switchMap(([fileContent, fileList]) => {
+        // check if a file with the same name is already been uploaded
         const isPresent = fileList.filter(f => f.name === name).length > 0;
 
+        // if there's already a file with the same name, append the current timestamp
         if (isPresent) {
           const chunks = name.split('.');
           const time = moment().format('YYYYMMDDHHmmssSSS');
 
+          // if chunks.length > 1 -> the file has an extension
           if (chunks.length > 1) {
+            // append the timestamp before the extension and, then, append the extension
+            // resulting filename will be: `duplicated.file.name_20220101000000000.ext`
             name = chunks.slice(0, -1).join('.') + '_' + time + '.' + chunks[chunks.length - 1];
           } else {
+            // simply append the timestamp
+            // resulting filename will be: `duplicatedFileName_20220101000000000`
             name = name + '_' + time;
           }
         }
 
+        // Body required by Git APIs to upload / update a file
         const body: CreateOrUpdateFile = {
-          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''),
-          content: encode(fileContent),
+          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''), // Commit message
+          content: encode(fileContent), // base64 encoding of the content
         };
 
+        // URL where to upload file
         const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/` +
           (fragment ? `${fragment.ontologyName}/${fragment.name}` : '') + '/' + name
         );
@@ -420,44 +447,69 @@ export class ApiService {
           return throwError(() => 'Could not get url. Missing repository or branch');
         }
 
+        // API call to update the file
         return this._http.put(url, body);
       }))
+
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true, data: name}) ))
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.message});
       }));
   }
 
 
+  /**
+   * Uploads a file relative to a test definition.
+   * @param dataFile File to upload
+   * @param type Type of the file to upload (e.g.: dataset)
+   * @param fragment Reference fragment (fragment in which is defined the test)
+   * @returns `Observable` of `ApiResult` having in `data` the URL of the uploaded file
+   */
   uploadTestFile(dataFile?: File, type?: FileTypes, fragment?: Fragment): Observable<ApiResult<string>> {
     if (!dataFile) {
+      // if dataFile is not provided just return a successful response
       return of({success: true});
     }
 
+    // get file name
     let name = dataFile.name;
 
+    // get file content and list test files in parallel using `zip`
     return zip(from(dataFile.text()), this.listTestFiles(fragment, type))
       .pipe(switchMap(([fileContent, fileList]) => {
+        // check if a file with the same name is already been uploaded
         const isPresent = fileList.filter(f => f.name === name).length > 0;
 
+        // if there's already a file with the same name, append the current timestamp
         if (isPresent) {
           const chunks = name.split('.');
           const time = moment().format('YYYYMMDDHHmmssSSS');
 
+          // if chunks.length > 1 -> the file has an extension
           if (chunks.length > 1) {
+            // append the timestamp before the extension and, then, append the extension
+            // resulting filename will be: `duplicated.file.name_20220101000000000.ext`
             name = chunks.slice(0, -1).join('.') + '_' + time + '.' + chunks[chunks.length - 1];
           } else {
+            // simply append the timestamp
+            // resulting filename will be: `duplicatedFileName_20220101000000000`
             name = name + '_' + time;
           }
         }
 
+        // Body required by Git APIs to upload / update a file
         const body: CreateOrUpdateFile = {
-          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''),
-          content: encode(fileContent),
+          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''), // Commit message
+          content: encode(fileContent), // base64 encoding of the content
         };
 
         const subfolder = type ? FILE_TYPES[type].folder : null;
 
+        // URL where to upload file
         const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/` +
           (fragment ? `${fragment.ontologyName}/${fragment.name}` : '') +
           '/' +
@@ -467,42 +519,79 @@ export class ApiService {
         if (!url) {
           return EMPTY;
         }
-
+        // API call to update the file
         return this._http.put(url, body);
       }))
+
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true, data: name}) ))
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.message});
       }));
   }
 
-  deleteFragment(fragmentName: string): Observable<ApiResult> {
+
+  /**
+   * Deletes a fragment
+   * @param fragment Fragment to delete
+   * @returns `Observable` of `ApiResult`
+   */
+  deleteFragment(fragment: Fragment): Observable<ApiResult> {
+    // list fragments
     return this.getFragments()
       .pipe(switchMap(fragments => {
-        fragments = fragments.filter(f => f.name !== fragmentName);
-        return this._updateFragments(fragments, `Removed fragment ${fragmentName}`, this.userInputSha);
+        // filter out the one with the same name and ontology name
+        // NOTE: fragment.name and fragment.ontologyName should be unique
+        fragments = fragments.filter(f => f.name !== fragment.name && f.ontologyName !== fragment.ontologyName);
+
+        // update fragments
+        return this._updateFragments(fragments, `Removed fragment ${fragment.name}`, this.userInputSha);
       }))
 
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true})))
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.message});
       }));
   }
 
-  deleteTestFromFragment(fragmentName: string, testId: string): Observable<ApiResult> {
+
+  /**
+   * Deletes a test from the specified Fragment
+   * @param fragment Parent fragment from which to delete test
+   * @param testId id of test to delete
+   * @returns `Observable` of `ApiResult`
+   */
+  deleteTestFromFragment(fragment: Fragment, testId: string): Observable<ApiResult> {
+    // list fragments
     return this.getFragments()
       .pipe(switchMap((fragments) => {
-        const fragment = fragments.find(f => f.name === fragmentName);
+        // get fragment to update
+        const toUpdate = fragments.find(f => f.name === fragment.name && f.ontologyName === fragment.ontologyName);
 
-        if (!fragment) {
+        // if fragment is not found simply exit
+        if (!toUpdate) {
           return of(null);
         }
 
-        fragment.tests = fragment.tests?.filter(t => t.id !== testId);
+        // filter out the test with the specified id
+        toUpdate.tests = toUpdate.tests?.filter(t => t.id !== testId);
 
-        return this._updateFragments(fragments, `Removed test ${testId} from fragment ${fragmentName}`, this.userInputSha);
+        // update fragment
+        return this._updateFragments(fragments, `Removed test ${testId} from fragment ${fragment.name}`, this.userInputSha);
       }))
+
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true})))
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse): Observable<ApiResult> => {
         return of({
           success: false,
@@ -511,62 +600,17 @@ export class ApiService {
       }));
   }
 
-  private _updateUserInput(content: string, message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
-    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
-
-    if (!url) {
-      return EMPTY;
-    }
-
-    const body: CreateOrUpdateFile = {
-      message,
-      content: encode(content),
-    };
-
-    if (sha) {
-      body.sha = sha;
-    }
-
-    return this._http.put<CreateOrUpdateFileResponse>(url, body);
-  }
-
-  private _updateFragments(fragments: Fragment[], message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
-    const content = {
-      ...this.userInput || {},
-      fragments
-    };
-
-    return this._updateUserInput(JSON.stringify(content, null, 2), message, sha)
-      .pipe(tap((res) => {
-        this.userInputSha = res.content?.sha;
-        this.userInputEtag = `"${res.content?.sha}"`;
-        this.userInput = content;
-      }));
-  }
-
-  private _parseUserInput(res: HttpResponse<ContentFile>): UserInput {
-    this.userInputEtag = res.headers.get('etag')?.replace('W/', '') || '';
-
-    const body = res.body;
-    const defaultUserInput: UserInput = { fragments: [] };
-
-    if (!body) {
-      return defaultUserInput;
-    }
-
-    this.userInputSha = body.sha;
-    const fileContent = atob(body.content);
-
-    if (!fileContent) {
-      return defaultUserInput;
-    }
-
-    return JSON.parse(fileContent) as UserInput;
-  }
-
-  getFragmentTest(fragmentName: string, testId: string): Observable<TestDetail> {
-    return this.getFragment(fragmentName)
+  /**
+   * Get test by id
+   * @param fragment Fragment from which to retrieve test
+   * @param testId Id of the test to retrieve
+   * @returns `Observable` of `TestDetail`
+   */
+  getFragmentTest(fragment: Fragment, testId: string): Observable<TestDetail> {
+    // get actual fragment from repository
+    return this.getFragment(fragment.name, fragment.ontologyName)
       .pipe(switchMap((res): Observable<TestDetail> => {
+        // find test by id
         const test = res.tests?.find(t => t.id === testId);
 
         if (!test) {
@@ -577,6 +621,11 @@ export class ApiService {
       }));
   }
 
+
+  /**
+   * Returns the list of ontologies
+   * @returns `Observable` of list of `Ontology`
+   */
   listOntologies(): Observable<Ontology[]> {
     const headers = ApiService.getDefaultHeaders(this.userInputEtag);
     const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
@@ -585,156 +634,338 @@ export class ApiService {
       return throwError(() => 'Repository or branch not selected');
     }
 
+    // get list of ontologies from UserInput.json
     return this._http.get<ContentFile>(url, {observe: 'response', headers})
       .pipe(map(res => {
         this.userInput = this._parseUserInput(res);
         return this.userInput.ontologies || [];
       }))
       .pipe(catchError(() => {
+        // 304 responses make HttpClient throw error and thus, it must be handled this way
         return of(this.userInput?.ontologies || []);
       }));
   }
 
+
+  /**
+   * Stores a new ontology either by uploading a file or by providing the URL of an already uploaded file
+   * NOTE: the URL should start with `https://raw.githubusercontent.com
+   * @param ontology Ontology form data to store
+   * @returns `Observable` of `ApiResult`
+   */
   uploadOntology(ontology: OntologyForm): Observable<ApiResult> {
+    // Check at least the file or the URL is present
     if (!ontology.file?.length && !ontology.url) {
       return throwError(() => 'Neither file nor URL provided');
     }
 
     let $uploadSrc: Observable<ApiResult<string>> = of({success: true});
 
-
+    // If user selected a file
     if (ontology.file?.length) {
+      // get file name
       let name = ontology.file[0].name;
+
+      // prepare content observable
       const $content = from(ontology.file[0].text());
 
+      // get file content, ontologies, and ontology files (if any) in parallel using `zip`
       $uploadSrc = zip($content, this.listOntologies(), this.listFiles(`${this.baseDir}/${ontology.name}`))
         .pipe(switchMap(([fileContent, ontologies, fileList]: [string, Ontology[], ContentFile[]]) => {
+
+          // check if an ontology with the same name has already been defined
           const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
 
+          // if duplicated ontology, throw an error
           if (alreadyDefined?.length) {
             return throwError(() => `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`);
           }
 
+          // filter over files and check if there's at least another file with the same name
           const isPresent = fileList.filter(f => f.name === name).length > 0;
 
+
+          // if there's already a file with the same name, append the current timestamp
           if (isPresent) {
             const chunks = name.split('.');
             const time = moment().format('YYYYMMDDHHmmssSSS');
 
+            // if chunks.length > 1 -> the file has an extension
             if (chunks.length > 1) {
+              // append the timestamp before the extension and, then, append the extension
+              // resulting filename will be: `duplicated.file.name_20220101000000000.ext`
               name = chunks.slice(0, -1).join('.') + '_' + time + '.' + chunks[chunks.length - 1];
             } else {
+              // simply append the timestamp
+              // resulting filename will be: `duplicatedFileName_20220101000000000`
               name = name + '_' + time;
             }
           }
 
+          // Body required by Git APIs to upload / update a file
           const body: CreateOrUpdateFile = {
-            message: `Uploaded ontology ${name}`,
-            content: encode(fileContent),
+            message: `Uploaded ontology ${name}`, // Commit message
+            content: encode(fileContent), // base64 encoding of the content
           };
 
+          // where to upload file (including file name)
           const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/${ontology.name}/${name}`);
 
           if (!url) {
             return throwError(() => 'Repository or branch not selected');
           }
 
+          // upload file
           return this._http.put(url, body);
         }))
+
+        // build ApiResult
         .pipe(map(() => {
+
+          // build url of the ontology
           const repo = localStorage.getItem(SELECTED_REPO_KEY);
           const branch = localStorage.getItem(SELECTED_BRANCH_KEY);
           const url = `https://raw.githubusercontent.com/${repo}/${branch}/${this.baseDir}/${ontology.name}/${name}`;
 
+          // return ApiResult with ontology URL in data property
           return { success: true, data: url };
         }));
 
     } else if (ontology.url) {
       $uploadSrc = this.listOntologies()
         .pipe(switchMap((ontologies) => {
+          // check if there's another ontology with the same name and, if so, throw an error
           const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
 
           if (alreadyDefined?.length) {
             return throwError(() => `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`);
           }
 
+          // build ApiResult with ontology URL in data property
           return of({success: true, data: ontology.url});
         }));
     }
 
+    // upload file if any, and return the ontology URL
     return $uploadSrc.pipe(switchMap((apiResult) => {
-
+      // here it has already been checked if the ontology already exists so no need to check again
       const ontologies = this.userInput?.ontologies || [];
 
+      // if URL is not present, something has errored and it has not been detected
       if (!apiResult.data) {
         return throwError(() => 'Application error during save. URL not defined');
       }
 
+      // push the new ontology in ontologies list
       ontologies.push({
         url: apiResult.data,
         name: ontology.name,
         userDefined: true
       });
 
+      // update UserInput with the new ontologies
       const userInput: UserInput = {
         ...this.userInput || {},
-        ontologies
+        ontologies // this overrides the old ontology list
       };
 
+      // update user input
       return this._updateUserInput(
-        JSON.stringify(userInput, null, 2),
-        `Added ontology ${apiResult.data} to UserInput.json`,
-        this.userInputSha
+        JSON.stringify(userInput, null, 2), // formatting for visualization purposes
+        `Added ontology ${apiResult.data} to UserInput.json`, // commit messages
+        this.userInputSha // sha of the the previous UserInput.json
       );
     }))
+
+
+      // build ApiResult to return
       .pipe(map((): ApiResult => ({ success: true })))
+
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err): Observable<ApiResult> => of({success: false, message: err })));
   }
 
+
+  /**
+   * Deletes an ontology by name
+   * @param name ontology name
+   * @returns `Observable` of `ApiResult`
+   */
   deleteOntology(name: string): Observable<ApiResult> {
+    // get current list of ontologies from repository
     return this.listOntologies()
       .pipe(switchMap(ontologies => {
+        // filter out the ontology having the provided name
         ontologies = ontologies.filter(o => o.name !== name);
+
+        // remove corresponding fragments
         const fragments = (this.userInput?.fragments || []).filter(f => f.ontologyName !== name);
 
+        // create a new UserInput.json with the filtered lists
         const userInput: UserInput = {
           fragments,
           ontologies
         };
 
+        // update UserInput.json
         return this._updateUserInput(JSON.stringify(userInput, null, 2), `Removed ontology ${name}`, this.userInputSha);
       }))
+
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true})))
+
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.message});
       }));
   }
 
+
+  /**
+   * Bulk update of multiple ontologies.
+   * This method is used to include or exclude newly found ontologies.
+   * @param updatedOntologies List of updated ontologies
+   * @returns `Observable` of `ApiResult`
+   */
   updateOntologies(updatedOntologies: Ontology[]): Observable<ApiResult> {
+    // get current list of ontologies from repository
     return this.listOntologies()
       .pipe(switchMap(ontologies => {
+        // map ontologies using URL as key
+        // URL is unique for a file thus, if ontology is defined twice, this way is kept only the last one
         const ontoMap = Object.fromEntries(ontologies.map(o => [o.url, o]));
 
         for (let i = 0; i < updatedOntologies.length; i++) {
           const ontology = updatedOntologies[i];
 
+          // ontology.url should always be defined
+          // if an ontology we are updating is already present in the list of the ontologies, overwrite with the updated one
           if (ontology.url && ontoMap[ontology.url]) {
             ontoMap[ontology.url] = ontology;
           }
         }
 
+        // get the list of the ontologies
         ontologies = Object.values(ontoMap);
 
+        // update UserInput.json
         const userInput: UserInput = {
-          fragments: this.userInput?.fragments || [],
-          ontologies
+          fragments: this.userInput?.fragments || [], // fragment hasn't been touched, use the cached ones
+          ontologies // provide the new ontology list
         };
 
+        // update UserInput.json
         return this._updateUserInput(JSON.stringify(userInput, null, 2), `Removed ontology ${name}`, this.userInputSha);
       }))
+
+
+      // build ApiResult to return
       .pipe(map(() => ({success: true})))
+
+
+      // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
         return of({success: false, message: err.message});
       }));
+  }
+
+  /**
+   * Updates or creates `UserInput.json` replacing its content with the provided one
+   * @param content Raw content to put into UserInput.json file
+   * @param message Commit message
+   * @param sha Last UserInput.json sha returned from API. Leave it empty if the file has to be created
+   * @returns `Observable` of GitHub API response
+   */
+  private _updateUserInput(content: string, message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
+    const url = ApiService.getUrl(`/repos/{repo}/contents/${this.userInputPath}`);
+
+    // if url is empty, repository and branch has not been selected
+    if (!url) {
+      return EMPTY;
+    }
+
+    // GitHub API request body
+    const body: CreateOrUpdateFile = {
+      message, // Commit message
+      content: encode(content), // base64-encoded body
+    };
+
+    // if sha has been provided, add to request body
+    // if is empty and UserInput.json already exists, API call will throw an error
+    if (sha) {
+      body.sha = sha;
+    }
+
+    // make update API call
+    return this._http.put<CreateOrUpdateFileResponse>(url, body);
+  }
+
+  /**
+   * Updates or creates fragment list in `UserInput.json`
+   * @param fragments List of fragments to update
+   * @param message Commit message
+   * @param sha Last UserInput.json sha returned from API. Leave it empty if the file has to be created
+   * @returns `Observable` of GitHub API response
+   */
+  private _updateFragments(fragments: Fragment[], message: string, sha?: string): Observable<CreateOrUpdateFileResponse> {
+    // re-create the user input
+    const content: UserInput = {
+      ...this.userInput || {},
+      fragments // overwrite old fragment list with the new one
+    };
+
+    // upsert UserInput.json providing the stringified version of the new content
+    return this._updateUserInput(JSON.stringify(content, null, 2), message, sha)
+      .pipe(tap((res) => {
+        this.userInputSha = res.content?.sha;
+        this.userInputEtag = `"${res.content?.sha}"`;
+        this.userInput = content;
+      }));
+  }
+
+  /**
+   * Parses the raw response from API call transforming into actual `UserInput`
+   * @param res Raw response from API call including headers
+   * @returns Parsed `UserInput.json` or a default one if it doesn't exists, is empty, or invalid
+   */
+  private _parseUserInput(res: HttpResponse<ContentFile>): UserInput {
+    // gets and stores ETag from api response for future use
+    // see ApiService.getDefaultHeaders
+    this.userInputEtag = res.headers.get('etag')?.replace('W/', '') || '';
+
+    const body = res.body;
+    const defaultUserInput: UserInput = { ontologies: [], fragments: [] };
+
+    // if body is empty, return a default user input
+    // useful when UserInput.json has not created yet
+    if (!body) {
+      return defaultUserInput;
+    }
+
+    // store sha
+    this.userInputSha = body.sha;
+    let fileContent: string;
+
+    try {
+      // decode body from base64
+      // will return a string representing the content of UserInput.json
+      fileContent = decode(body.content);
+
+      // if UserInput.json is empty, return the default UserInput
+      if (!fileContent) {
+        return defaultUserInput;
+      }
+
+      // parse and return UserInput.json
+      return JSON.parse(fileContent) as UserInput;
+
+    } catch (e) {
+      // if an error occurs, log it and return the default UserInput
+      console.error(e);
+      return defaultUserInput;
+    }
   }
 }

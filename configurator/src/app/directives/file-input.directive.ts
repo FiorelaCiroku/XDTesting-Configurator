@@ -1,6 +1,9 @@
-import { Directive, ElementRef, forwardRef, HostListener, Renderer2 } from '@angular/core';
+import { Directive, forwardRef, HostListener } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+/**
+ * Adds support for file input in reactive forms
+ */
 @Directive({
   selector: '[configFileInput]',
   providers: [{
@@ -16,8 +19,13 @@ export class FileInputDirective implements ControlValueAccessor {
   private _onModelChange?: Function;
   private _onModelTouched?: Function;
 
-  constructor(private _hostEl: ElementRef<HTMLInputElement>, private _renderer2: Renderer2) { }
+  constructor() {//
+  }
 
+  /**
+   * Passes `FileList` to registered `onChange` function, in order to update the model with the provided value
+   * @param files FileList from input element
+   */
   @HostListener('change', ['$event.target.files'])
   updateModel(files: FileList): void {
     if (this._onModelChange) {
@@ -25,6 +33,9 @@ export class FileInputDirective implements ControlValueAccessor {
     }
   }
 
+  /**
+   * Signals that the input has been touched
+   */
   @HostListener('blur')
   onBlur(): void {
     if (this._onModelTouched) {

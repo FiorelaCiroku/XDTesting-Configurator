@@ -46,14 +46,14 @@ export class FragmentListComponent {
     this.table?.filterGlobal(input.value, 'contains');
   }
 
-  removeFragment(name: string): void {
+  removeFragment(fragment: Fragment): void {
     if (!confirm('Are you sure? All data will be lost')) {
       return;
     }
 
     this.deleting = true;
 
-    const $sub = this.apiService.deleteFragment(name)
+    const $sub = this.apiService.deleteFragment(fragment)
       .pipe(tap((result) => {
         this.showAlert = true;
 

@@ -253,28 +253,33 @@ export class TestCrudComponent implements OnDestroy {
   }
 
   private _init(): void {
-    const $fragment: Observable<Fragment> = this._route.params
-      .pipe(switchMap((p: EditFragmentTestParams) => {
-        if (!p.fragmentName) {
-          return throwError(() => 'Empty fragment name');
-        }
-        return this._apiService.getFragment(p.fragmentName);
-      }));
+    this._route.params
+      .pipe(switchMap((p: EditFragmentTestParams): Observable<[Fragment, EditFragmentTestParams]> => {
+        const chunks = p.fragmentName?.split('_');
 
-    const $test: Observable<TestDetail | undefined> = this._route.params
-      .pipe(switchMap((p: EditFragmentTestParams) => {
+        if (!p.fragmentName || chunks?.length < 2) {
+          return throwError(() => 'Empty or incorrect parameter name provided. Expected ontologyName_fragmentName');
+        }
+
+        const [ontologyName, fragmentName] = chunks;
+        return zip(this._apiService.getFragment(fragmentName, ontologyName), of(p));
+      }))
+
+
+      .pipe(switchMap(([fragment, p]): Observable<[Fragment, TestDetail | undefined]> => {
         if (p.testId) {
-          return this._apiService.getFragmentTest(p.fragmentName, p.testId);
+          return zip(of(fragment), this._apiService.getFragmentTest(fragment, p.testId));
         }
+        return of([fragment, undefined]);
+      }))
 
-        return of(undefined);
-      }));
 
-    this._fragmentsSub = zip($fragment, $test)
       .pipe(catchError(err => {
         this.initErrorMsg = err;
         return EMPTY;
       }))
+
+
       .subscribe(([fragment, testDetail]) => {
         if (testDetail?.status === 'running') {
           this.initErrorMsg = 'You can\'t edit a running test. Wait until it has finished running';

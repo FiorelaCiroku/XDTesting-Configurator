@@ -89,16 +89,16 @@ export class FragmentDetailComponent {
       return;
     }
 
-    const fragmentName = this.fragment.name;
+    const fragment = this.fragment;
     this.deleting = true;
 
-    const $sub = this.apiService.deleteTestFromFragment(fragmentName, testId)
+    const $sub = this.apiService.deleteTestFromFragment(fragment, testId)
       .pipe(tap((res) => {
         if (!res.success) {
           this.errorMsg = res.message;
         }
       }))
-      .pipe(switchMap(() => this.apiService.getFragment(fragmentName)))
+      .pipe(switchMap(() => this.apiService.getFragment(fragment.name, fragment.ontologyName)))
       .subscribe(res => {
         this.fragment = res;
         this.tests = res.tests || [];
@@ -129,13 +129,14 @@ export class FragmentDetailComponent {
   private _initFragment(): void {
     const $sub = this._route.params
       .pipe(filter((p: FragmentDetailParams) => p.fragmentName))
-      .pipe(switchMap((p: FragmentDetailParams) =>
-        this.apiService.getFragment(p.fragmentName)
+      .pipe(switchMap((p: FragmentDetailParams) => {
+        const [ontologyName, fragmentName] = p.fragmentName.split('_');
+        return this.apiService.getFragment(fragmentName, ontologyName)
           .pipe(tap((result) => {
             this.fragment = result;
             this.tests = result?.tests || [];
-          }))
-      ))
+          }));
+      }))
       .pipe(switchMap(() =>
         this._initFiles()
       ))

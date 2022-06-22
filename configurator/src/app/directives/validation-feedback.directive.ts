@@ -1,7 +1,9 @@
 import { Directive, DoCheck, ElementRef, Input, Renderer2 } from '@angular/core';
 import { AbstractControl, NgControl } from '@angular/forms';
 
-
+/**
+ * Displays validation feedback in HTML
+ */
 @Directive({
   selector: '[configValidationFeedback]'
 })
@@ -18,13 +20,19 @@ export class ValidationFeedbackDirective implements DoCheck {
 
 
   ngDoCheck(): void {
+    // get HTML element
     const element = this._hostEl?.nativeElement;
+
+    // get registered control
     const control = this._ngControl.control;
 
+    // if control has not been registered, the element is not present in DOM, is disabled or has not been touched yet just stop the processing
     if (!control || !control.touched || control.pristine || !element || control.disabled) {
       return;
     }
 
+    // handles the current status checking for the previous one
+    // if the current status is equal tho the previous, no actions have to be taken
     if (control.valid) {
       if (this._lastStatus !== 'VALID') {
         this._handleValid(element);
@@ -38,6 +46,7 @@ export class ValidationFeedbackDirective implements DoCheck {
   }
 
   private _handleValid(element: HTMLElement): void {
+    // set current status
     this._lastStatus = 'VALID';
 
     // remove invalid classes and valid one
@@ -66,6 +75,7 @@ export class ValidationFeedbackDirective implements DoCheck {
   }
 
   private _handleInvalid(element: HTMLElement, control: AbstractControl): void {
+    // set current status
     this._lastStatus = 'INVALID';
 
     // remove invalid classes and valid one
