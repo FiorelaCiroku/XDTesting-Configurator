@@ -45,7 +45,6 @@ import { TextDetailsComponent } from './components/modals/text-details/text-deta
 import { DashboardComponent } from './components/pages/dashboard/dashboard.component';
 import { SelectOntologyComponent } from './components/modals/select-ontology/select-ontology.component';
 import { NgChartsModule } from 'ng2-charts';
-import { TestComponent } from './components/test/test.component';
 
 
 @NgModule({
@@ -83,8 +82,7 @@ import { TestComponent } from './components/test/test.component';
      DashboardComponent,
      TestDocsComponent,
      TextDetailsComponent,
-     SelectOntologyComponent,
-     TestComponent,
+     SelectOntologyComponent
   ],
   imports: [
     // Angular
