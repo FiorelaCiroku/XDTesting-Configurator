@@ -10,34 +10,34 @@
           "inlineTemplate": false,
           "inlineStyle": false,
           "style": "scss",
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/components"
         },
         "@schematics/angular:class": {
-          "skipTests": true
+          "skipTests": false
         },
         "@schematics/angular:directive": {
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/directives"
         },
         "@schematics/angular:guard": {
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/guards"
         },
         "@schematics/angular:interceptor": {
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/interceptors"
         },
         "@schematics/angular:pipe": {
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/pipes"
         },
         "@schematics/angular:resolver": {
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/resolvers"
         },
         "@schematics/angular:service": {
-          "skipTests": true,
+          "skipTests": false,
           "path": "src/app/services"
         },
         "@schematics/angular:application": {

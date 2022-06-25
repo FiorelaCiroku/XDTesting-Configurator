@@ -35,7 +35,7 @@ export class DashboardComponent {
 
 
 
-  constructor(private readonly apiService: ApiService) {
+  constructor(apiService: ApiService) {
     this.statusStats = DashboardComponent._getStatusStats();
 
     lastValueFrom(forkJoin([apiService.getFragments(), apiService.listOntologies()]))
@@ -47,6 +47,9 @@ export class DashboardComponent {
 
   }
 
+  /**
+   * Helper function to get default stats object
+   */
   private static _getStatusStats(): StatusStats {
     return {
       running: 0,
@@ -56,6 +59,10 @@ export class DashboardComponent {
     };
   }
 
+  /**
+   * Calculates aggregated data to show statistics in dashboard
+   * @param fragments
+   */
   private _initStats(fragments: Fragment[]): void {
     const ontologyStats: { [k: string]: TestTypeStats } = {};
     this.fragments = fragments.length;

@@ -19,6 +19,9 @@ export class SelectFileComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // get modal data
+    // data only available from this point on
+    // see https://www.primefaces.org/primeng/dynamicdialog
     const fragment: Fragment = this._config.data.fragment;
     const type: FileTypes = this._config.data.fileType;
 
@@ -26,15 +29,20 @@ export class SelectFileComponent implements OnInit {
       return;
     }
 
+    // list files and prepare data to pass to files table
     const $sub = this._apiService.listTestFiles(fragment, type)
       .subscribe((files) => {
         const fileTypes = Object.entries(FILE_TYPES);
         this.files = [];
         this.files = files.map(f => {
+          // split file name into chunks
           const nameChunks = f.name.split('.');
+          // remove and get extension from filename
+          // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
           const extension = nameChunks.splice(-1, 1)[0];
           const pathChunks = f.path.split('/');
 
+          // determine file type
           let fileType: FileTypes = 'query';
 
           for (const [ft, spec] of fileTypes) {
@@ -43,6 +51,7 @@ export class SelectFileComponent implements OnInit {
             }
           }
 
+          // build object
           return {
             name: nameChunks.join('.'),
             extension,
@@ -57,6 +66,10 @@ export class SelectFileComponent implements OnInit {
       });
   }
 
+  /**
+   * Closes the modal returning the selected file
+   * @param file Data returned from table
+   */
   onFileSelected(file: FragmentFile): void {
     this._ref.close(file);
   }

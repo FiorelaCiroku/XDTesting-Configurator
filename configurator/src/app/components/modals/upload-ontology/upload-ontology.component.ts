@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { markAllAsTouchedOrDirty } from '../../../utils';
+import { markAllAsDirty } from '../../../utils';
 import { catchError, of, tap } from 'rxjs';
 import { TypedFormControl, TypedFormGroup } from '../../../utils/typed-form';
 import { ApiService } from '../../../services';
@@ -21,6 +21,7 @@ export class UploadOntologyComponent {
   formGroup: TypedFormGroup<OntologyForm>;
 
   constructor(private apiService: ApiService) {
+    // create form group in constructor to avoid type issues and angular problems
     this.formGroup = new TypedFormGroup<OntologyForm>({
       name: new TypedFormControl<string>(),
       url: new TypedFormControl<string>(),
@@ -28,6 +29,9 @@ export class UploadOntologyComponent {
     });
   }
 
+  /**
+   * Resets url and file fields in case `uploadOntology` changes value
+   */
   onToggle(): void {
     this.formGroup.patchValue({
       url: undefined,
@@ -35,21 +39,28 @@ export class UploadOntologyComponent {
     });
   }
 
+  /**
+   * Creates a new ontology in `UserInput.json` and, if provided, uploads ontology `.owl` file
+   */
   upload(): void {
+    // check form group validity and, possibly, mark fields as touched and dirty
     if (!this.formGroup.valid) {
-      markAllAsTouchedOrDirty(this.formGroup);
-      markAllAsTouchedOrDirty(this.formGroup, true);
+      this.formGroup.markAllAsTouched();
+      markAllAsDirty(this.formGroup);
       return;
     }
 
+    // get form value
     const fgValue = this.formGroup.value;
 
+    // should never happen
     if (!fgValue) {
       this.errorMsg = 'Unknown error';
       this.showAlert = true;
       return;
     }
 
+    // disable inputs to prevent user modifications during API call
     this.formGroup.disable();
     this.uploading = true;
 
@@ -71,6 +82,8 @@ export class UploadOntologyComponent {
       .subscribe(() => {
         this.uploading = false;
         this.showAlert = true;
+
+        // re-enable form
         this.formGroup.enable();
         $sub.unsubscribe();
       });

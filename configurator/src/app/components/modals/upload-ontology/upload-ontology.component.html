@@ -19,6 +19,7 @@
     <input id="name" type="text" formControlName="name" class="form-control" configValidationFeedback required />
   </div>
 
+  <!-- shown if upload ontology switch is activated -->
   <div *ngIf="uploadOntology">
     <label for="file" class="mb-1 form-label">File</label>
     <input formControlName="file"
@@ -30,6 +31,7 @@
            type="file">
   </div>
 
+  <!-- shown if upload ontology switch is off -->
   <div *ngIf="!uploadOntology">
     <label for="fileUrl" class="mb-1 form-label">File URL</label>
     <input formControlName="url"

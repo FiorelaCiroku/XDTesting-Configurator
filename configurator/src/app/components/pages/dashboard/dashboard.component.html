@@ -3,6 +3,7 @@
 <div class="row px-3 mt-5">
   <div class="col-12 col-md-9 row flex-column">
     <div class="col-12 row">
+      <!-- Summary boxes with icons -->
       <div *ngFor="let stat of statusStats | keyvalue"
            class="col mx-2 p-3 border border-{{$any(colors)[stat.key]}} rounded text-{{$any(colors)[stat.key]}} d-flex flex-column align-items-center">
         <i [class]="$any(icons)[stat.key]"></i>
@@ -11,6 +12,7 @@
       </div>
     </div>
 
+    <!-- Line chart. See https://chartjs.org -->
     <div class="my-3 d-block" *ngIf="lineData">
       <canvas baseChart [data]="lineData" [legend]="true" [options]="{responsive: true}" [type]="'line'"></canvas>
     </div>

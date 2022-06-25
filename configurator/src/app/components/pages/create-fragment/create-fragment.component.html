@@ -1,5 +1,6 @@
 <h1 class="mb-5">Create new Ontology Fragment</h1>
 
+<!-- Alert to show after ontology fragment has been saved -->
 <div class="alert alert-{{saved ? 'success' : 'danger'}}" *ngIf="showAlert">
   <div class="row">
     <div class="col">
@@ -21,9 +22,12 @@
   </div>
 </div>
 
+<!-- Create fragment form. It's hidden when fragment is created -->
 <form (submit)="createFragment()" [formGroup]="formGroup" novalidate *ngIf="!saved">
   <div class="mb-3">
     <label for="ontology-name" class="form-label">Ontology Name</label>
+    <!-- Ontology selection. On selection, form control value will be set as ontology name. -->
+    <!-- On error, configValidationFeedback will show a error message -->
     <select formControlName="ontologyName" id="ontology-name" class="form-select" configValidationFeedback required>
       <option value="">Select an Ontology</option>
       <option *ngFor="let ontology of ontologies" [value]="ontology.name">{{ ontology.name }}</option>
@@ -32,6 +36,8 @@
 
   <div class="mb-3">
     <label for="fragment-name" class="form-label">Ontology fragment name</label>
+
+    <!-- Fragment name input. On error, configValidationFeedback will show a error message -->
     <input formControlName="name"
            id="fragment-name"
            class="form-control"
@@ -41,8 +47,13 @@
            required>
   </div>
 
+
+
   <div class="mb-3">
     <label for="fragment-file" class="form-label">Ontology fragment file</label>
+
+    <!-- Fragment file input. On error, configValidationFeedback will show a error message -->
+    <!-- configFileInput will make form control store selected value -->
     <input formControlName="file"
            id="fragment-file"
            class="form-control"

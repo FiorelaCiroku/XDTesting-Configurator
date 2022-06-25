@@ -6,7 +6,7 @@
   </i>
 </h1>
 
-
+<!-- General alert -->
 <config-alert [type]="error ? 'danger' : 'success'" [(isOpen)]="showAlert">
   <ng-container *ngIf="error">
     {{ error }}
@@ -29,13 +29,15 @@
   </div>
 </div>
 
+<!-- Fragments table. See https://www.primefaces.org/primeng/table -->
 <p-table [value]="fragments" responsiveLayout="scroll" [loading]="(apiService.$loading | async) || deleting"
          [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]"
          [globalFilterFields]="['name', 'ontologyName']" #table>
 
   <ng-template pTemplate="caption">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-      <button class="btn btn-primary d-block d-md-inline-block w-100 w-md-auto" (click)="clear(table)">
+        <!-- "Break filters" button -->
+        <button class="btn btn-primary d-block d-md-inline-block w-100 w-md-auto" (click)="clear(table)">
         <i class="fa-solid fa-filter-circle-xmark"></i>
         &nbsp;
         Clear filter
@@ -52,10 +54,12 @@
     <tr>
       <th>
         Ontology Fragment Name
+        <!-- Ontology fragment name filter -->
         <p-columnFilter type="text" field="name" display="menu" class="ms-2"></p-columnFilter>
       </th>
       <th>
         Ontology Name
+        <!-- Ontology name filter -->
         <p-columnFilter type="text" field="ontologyName" display="menu" class="ms-2"></p-columnFilter>
       </th>
       <th></th>
@@ -66,6 +70,7 @@
       <td>{{ fragment.name }}</td>
       <td>{{ fragment.ontologyName }}</td>
       <td class="text-end">
+        <!-- Buttons for editing or deleting test case -->
         <a [routerLink]="['./', fragment.ontologyName + '_' + fragment.name]" class="btn btn-sm btn-outline-warning me-1">
           <i class="fa-solid fa-pencil"></i>
         </a>

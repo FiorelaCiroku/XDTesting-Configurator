@@ -16,19 +16,24 @@ export class FragmentListComponent {
   error?: string;
   showAlert = false;
 
+  // gets table and table filter elements' class instance
   @ViewChild('table', {read: Table}) table?: Table;
   @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
 
 
   constructor(public apiService: ApiService, private _router: Router) {
+    // get fragment list
     const $sub = apiService.getFragments()
       .subscribe(fragments => {
         this.fragments = fragments;
-
         $sub.unsubscribe();
       });
   }
 
+  /**
+   * Clears table's filters
+   * @param table table on which to operate
+   */
   clear(table: Table): void {
     table.clear();
     if (this.tableFilter?.nativeElement) {
@@ -36,6 +41,10 @@ export class FragmentListComponent {
     }
   }
 
+  /**
+   * Performs free-text table filter
+   * @param e Search event
+   */
   filterContent(e: Event): void {
     const input = e?.target as HTMLInputElement;
 
@@ -46,13 +55,19 @@ export class FragmentListComponent {
     this.table?.filterGlobal(input.value, 'contains');
   }
 
+  /**
+   * Removes fragment from `UserData.json`. Won't remove any file associated with fragment
+   * @param fragment Fragment to remove
+   */
   removeFragment(fragment: Fragment): void {
+    // Browser native confirmation. Asks user to confirm operation before actually execute it.
     if (!confirm('Are you sure? All data will be lost')) {
       return;
     }
 
     this.deleting = true;
 
+    // deletes fragment and shows alert
     const $sub = this.apiService.deleteFragment(fragment)
       .pipe(tap((result) => {
         this.showAlert = true;

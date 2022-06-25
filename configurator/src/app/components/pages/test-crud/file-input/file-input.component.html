@@ -17,6 +17,7 @@
     <span class="ms-2">Upload new "{{ formGroupSpec.label }}"</span>
   </div>
 
+  <!-- Feedbacks -->
   <small class="d-block" *ngIf="currentFile" [class.mb-2]="!shouldShowNewFile()">
     Current "{{ formGroupSpec.label }}" file: <b>{{ currentFile }}</b>
   </small>
@@ -25,12 +26,13 @@
     New "{{ formGroupSpec.label }}" file: <b>{{ formGroupSpec.formGroup.controls.file.value?.[0].name || formGroupSpec.formGroup.controls.fileName.value }}</b>
   </small>
 
-
+  <!-- File selection modal trigger -->
   <button type="button" class="btn btn-primary w-100 w-sm-auto" *ngIf="useUploadedFile"
           (click)="pickExisting()">
     Select existing "{{ formGroupSpec.label }}" file
   </button>
 
+  <!-- Raw input text area -->
   <div *ngIf="!useUploadedFile">
     <ng-container *ngIf="showDefaultInput">
         <textarea class="form-control code-input" formControlName="content" *ngIf="!uploadFile"

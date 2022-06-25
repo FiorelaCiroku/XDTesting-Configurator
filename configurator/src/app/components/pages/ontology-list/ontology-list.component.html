@@ -17,6 +17,7 @@
   </div>
 </div>
 
+<!-- Ontologies table. See https://www.primefaces.org/primeng/table -->
 <p-table [value]="ontologies" responsiveLayout="scroll" [loading]="(apiService.$loading | async) || deleting"
          [paginator]="true" [rows]="25" [rowsPerPageOptions]="[25,50,75,100,150]">
   <ng-template pTemplate="header">

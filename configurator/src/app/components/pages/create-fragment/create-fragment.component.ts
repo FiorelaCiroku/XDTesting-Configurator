@@ -4,6 +4,7 @@ import { ApiResult, Fragment, FragmentForm, Ontology } from '../../../models';
 import { ApiService } from '../../../services';
 import { catchError, Observable, of, switchMap } from 'rxjs';
 import { Summary } from '../../shared/summary/summary.component';
+import { markAllAsDirty, toggleDisableControls } from 'src/app/utils';
 
 @Component({
   selector: 'config-create-fragment',
@@ -20,14 +21,17 @@ export class CreateFragmentComponent {
   summary: Summary[] = [];
 
   constructor(private _apiService: ApiService) {
+    // create form group in constructor to avoid type issues and angular problems
     this.formGroup = new TypedFormGroup<FragmentForm>({
       ontologyName: new TypedFormControl<string>(''),
       name: new TypedFormControl<string>(''),
       file: new TypedFormControl<FileList>()
     });
 
+    // get ontologies from api
     this._apiService.listOntologies()
       .pipe(catchError((err) => {
+        // in case of error, display alert
         this.errorMsg = err;
         this.showAlert = true;
         return of([]);
@@ -37,18 +41,22 @@ export class CreateFragmentComponent {
       });
   }
 
+  /**
+   * Uploads fragment file and creates a new fragment in `UserInput.json`
+   */
   createFragment(): void {
     if (!this.formGroup.valid) {
+      // in case the form is invalid, mark all as touched and dirty
+      // this shows the feedback
       this.formGroup.markAllAsTouched();
-
-      for (const control of Object.values(this.formGroup.controls)) {
-        control.markAsDirty();
-      }
-
+      markAllAsDirty(this.formGroup);
       return;
     }
 
-    this._toggleDisableControls();
+    // disable controls to prevent the user clicks on them while saving
+    toggleDisableControls(this.formGroup);
+
+    // get form's value
     const data = this.formGroup.value;
 
     const fragment: Fragment = {
@@ -56,9 +64,13 @@ export class CreateFragmentComponent {
       ontologyName: data?.ontologyName || ''
     };
 
+    // upload fragment file first
     const $sub = this._apiService.uploadFragmentFile(data?.file?.[0], fragment)
       .pipe(switchMap((res) => {
+        // set just uploaded file name
         fragment.fileName = `${fragment.ontologyName}/${fragment.name}/${res.data}`;
+
+        // create fragment in UserInput.json
         return this._apiService.createFragment(fragment);
       }))
       .pipe(catchError((err): Observable<ApiResult> => {
@@ -80,14 +92,5 @@ export class CreateFragmentComponent {
         $sub.unsubscribe();
       });
 
-  }
-
-  private _toggleDisableControls(): void {
-    if (this.formGroup.disabled) {
-      this.formGroup.enable();
-      return;
-    }
-
-    this.formGroup.disable();
   }
 }

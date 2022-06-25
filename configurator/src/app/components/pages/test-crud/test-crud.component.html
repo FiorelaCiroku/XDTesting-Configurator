@@ -1,12 +1,15 @@
+<!-- Alert to show errors during initialization -->
 <config-alert [dismissable]="false" [isOpen]="initErrorMsg && !saved" type="danger">
   {{initErrorMsg}}
 </config-alert>
 
+<!-- Show title only if page corrected initialized -->
 <ng-container *ngIf="!saved && fragment">
   <h1 class="mb-0">{{ test ? 'Edit' : 'Create'}} Test Case {{ test ? test.id : '' }}</h1>
-  <h4 class="mb-5">{{fragment?.name}}</h4>
+  <h4 class="mb-5">{{fragment.name}}</h4>
 </ng-container>
 
+<!-- General alert -->
 <config-alert [type]="saved ? 'success' : 'danger'" [(isOpen)]="showAlert" #alert>
   <ng-container *ngIf="saved">
     Test case successfully saved.<br>The test will now be started
@@ -21,7 +24,9 @@
   </ng-container>
 </config-alert>
 
+<!-- Show page body only if page corrected initialized -->
 <ng-container *ngIf="!saved && fragment">
+  <!-- Test status banner -->
   <config-alert [dismissable]="false"
                 [isOpen]="(test?.status === 'error' || test?.status === 'failed') && (test?.statusNotes || test?.issue)"
                 type="danger">
@@ -32,6 +37,7 @@
     </p>
   </config-alert>
 
+  <!-- Test form -->
   <form [formGroup]="fg" (submit)="save()" novalidate>
     <h5 class="font-weight-bold">Details</h5>
 
@@ -52,14 +58,17 @@
       </select>
     </div>
 
+    <!-- Reasoner selection. -->
+    <!-- Displayed only if test type is "INFERENCE_VERIFICATION" -->
     <div class="mb-3" *ngIf="fg?.controls?.type?.value === 'INFERENCE_VERIFICATION'">
       <label for="reasoner" class="form-label">Reasoner</label>
       <select id="reasoner" class="form-select" formControlName="reasoner" configValidationFeedback
-              [required]="fg?.controls?.type?.value === 'INFERENCE_VERIFICATION'">
+              [required]="fg.controls.type.value === 'INFERENCE_VERIFICATION'">
         <option *ngFor="let reasoner of reasoners" [value]="reasoner">{{reasoner}}</option>
       </select>
     </div>
 
+    <!-- Test case requirement. Displayed only if test type is no "ERROR_PROVOCATION" -->
     <div class="mb-3" *ngIf="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'">
       <label for="content" class="form-label">
         Test Case Requirement
@@ -69,14 +78,15 @@
         </i>
       </label>
       <textarea id="content" class="form-control" formControlName="content" configValidationFeedback
-                [required]="fg?.controls?.type?.value === 'ERROR_PROVOCATION'"></textarea>
+                [required]="fg.controls.type.value === 'ERROR_PROVOCATION'"></textarea>
     </div>
 
-
+    <!-- Query input, file or plain text. Displayed only if test type is no "ERROR_PROVOCATION" -->
     <config-file-input *ngIf="fg?.controls?.type?.value !== 'ERROR_PROVOCATION'" [formGroupSpec]="queryFg"
                        [currentFile]="test?.queryFileName" (onShowExistingFiles)="selectFile($event)"></config-file-input>
 
 
+    <!-- Data section -->
     <h5 class="font-weight-bold mt-5 mb-3">
       Data
       <i class="fa-solid fa-circle-info tooltip-icon ms-2"
@@ -86,18 +96,21 @@
       </i>
     </h5>
 
+    <!-- Data file input and switches -->
     <config-file-input [formGroupSpec]="dataFg" [showDefaultInput]="false" [currentFile]="test?.dataFileName"
                        (onShowExistingFiles)="selectFile($event)"
                        (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults('data', $event)">
     </config-file-input>
 
+    <!-- Expected result file input and switches -->
     <config-file-input [formGroupSpec]="expectedResultFg" [showDefaultInput]="false" [currentFile]="test?.expectedResultsFileName"
                        (onShowExistingFiles)="selectFile($event)"
                        (onToggleUploadOrSelectUploaded)="resetDataAndExpectedResults('expectedResults', $event)">
     </config-file-input>
 
+    <!-- Data and expected results raw input -->
     <config-data-input *ngIf="(!useExpectedResultsFile && fg?.controls?.type?.value === 'COMPETENCY_QUESTION') || !useDataFile"
-                       [withExpectedResults]="!useExpectedResultsFile && !useDataFile && fg?.controls?.type?.value === 'COMPETENCY_QUESTION'"
+                       [withExpectedResults]="!useExpectedResultsFile && !useDataFile && fg.controls.type.value === 'COMPETENCY_QUESTION'"
                        [onlyExpectedResults]="useDataFile" [formGroup]="fg.controls.dataContent"></config-data-input>
 
 

@@ -37,6 +37,7 @@ export class FragmentDetailComponent {
   statusOptions: Array<{icon: string; value: TestStatus}>;
   statusIcons: {[k in TestStatus]: string};
 
+  // gets table and table filter elements' class instance
   @ViewChild('table', {read: Table}) table?: Table;
   @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
 
@@ -56,11 +57,20 @@ export class FragmentDetailComponent {
     }));
   }
 
+  /**
+   * Helper to get test type label
+   * @param testType
+   * @returns Label for test type
+   */
   testLabel(testType: TestType): string {
     return this.testTypes[testType].label;
   }
 
 
+  /**
+   * Clears table's filters
+   * @param table table on which to operate
+   */
   clear(table: Table): void {
     table.clear();
     if (this.tableFilter?.nativeElement) {
@@ -68,6 +78,10 @@ export class FragmentDetailComponent {
     }
   }
 
+  /**
+   * Performs free-text table filter
+   * @param e Search event
+   */
   filterContent(e: Event): void {
     const input = e?.target as HTMLInputElement;
 
@@ -78,11 +92,18 @@ export class FragmentDetailComponent {
     this.table?.filterGlobal(input.value, 'contains');
   }
 
+  /**
+   * Deletes a test from a fragment. It doesn't delete associated files
+   * @param testId Fragment test id
+   */
   deleteTest(testId: string): void {
+    // Browser confirmation before actually performing deletion
     if (!confirm('Are you sure? Test data will be removed but files associated to it won\'t be deleted')) {
       return;
     }
 
+    // Check fragment has been initialized.
+    // Should never enter in `if`.
     if (!this.fragment) {
       this.errorMsg = 'Unknown fragment. Application error';
       this.showAlert = true;
@@ -92,6 +113,7 @@ export class FragmentDetailComponent {
     const fragment = this.fragment;
     this.deleting = true;
 
+    // delete test and show alert
     const $sub = this.apiService.deleteTestFromFragment(fragment, testId)
       .pipe(tap((res) => {
         if (!res.success) {
@@ -109,6 +131,9 @@ export class FragmentDetailComponent {
       });
   }
 
+  /**
+   * Opens modal to upload file for fragment
+   */
   uploadFiles(): void {
     const ref = this.dialogService.open(UploadFragmentFileComponent, {
       header: 'Upload a new file',
@@ -119,6 +144,7 @@ export class FragmentDetailComponent {
 
     const $sub = ref.onClose.subscribe(() => {
       if (this.fragment) {
+        // re-initialize page after modal closes
         this._initFiles();
       }
 
@@ -126,6 +152,10 @@ export class FragmentDetailComponent {
     });
   }
 
+  /**
+   * Initialize page.
+   * Downloads fragment and related files data
+   */
   private _initFragment(): void {
     const $sub = this._route.params
       .pipe(filter((p: FragmentDetailParams) => p.fragmentName))
@@ -150,6 +180,10 @@ export class FragmentDetailComponent {
       });
   }
 
+  /**
+   * Downloads fragment files data
+   * @returns Observable of fragment-related files
+   */
   private _initFiles(): Observable<ContentFile[]> {
     return this.apiService.listTestFiles(this.fragment)
       .pipe(tap((files) => {
@@ -177,6 +211,10 @@ export class FragmentDetailComponent {
       }));
   }
 
+  /**
+   * Opens a modal to display notes for test
+   * @param test
+   */
   testNotes(test: TestDetail): void {
     this.dialogService.open(TextDetailsComponent, {
       header: `Status notes for test ${test.id}`,

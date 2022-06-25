@@ -21,6 +21,9 @@ export class SelectOntologyComponent implements OnInit {
   constructor(private apiService: ApiService, private config: DynamicDialogConfig) { }
 
   ngOnInit(): void {
+    // get modal data
+    // data only available from this point on
+    // see https://www.primefaces.org/primeng/dynamicdialog
     const data = this.config.data;
 
     if (!data) {
@@ -30,7 +33,12 @@ export class SelectOntologyComponent implements OnInit {
     this.toSelect = data.toSelect;
   }
 
+  /**
+   * Saves the selected ontology discarding the other
+   */
   save(): void {
+    // for each ontology to set that has been parsed and is not user-defined
+    // also, if has not been selected, set as ignored
     for (const selected of this.toSelect) {
       const toKeep = this.selectedOntologies.includes(selected);
       selected.ignored = !toKeep;

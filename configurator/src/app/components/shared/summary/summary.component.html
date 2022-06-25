@@ -1,5 +1,6 @@
 <table>
   <ng-container *ngFor="let row of summaryData">
+    <!-- skip empty data -->
     <tr *ngIf="row.data">
       <th class="pe-2">{{ row.label }}</th>
       <td>{{ row.data }}</td>

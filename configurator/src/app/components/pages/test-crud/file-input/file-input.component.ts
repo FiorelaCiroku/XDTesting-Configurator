@@ -24,6 +24,10 @@ export class FileInputComponent {
     //
   }
 
+  /**
+   * Calculates whether should be rendered new file label or not
+   * @returns Whether should be rendered new file label
+   */
   shouldShowNewFile(): boolean {
     const fg = this.formGroupSpec?.formGroup;
 
@@ -39,14 +43,21 @@ export class FileInputComponent {
     );
   }
 
+  /**
+   * Actions to perform when a switch is toggled. It resets file, fileName and content fields
+   */
   onToggle(): void {
     this.formGroupSpec?.formGroup.controls.file.reset();
     this.formGroupSpec?.formGroup.controls.fileName.reset();
     this.formGroupSpec?.formGroup.controls.content?.reset();
 
+    // signals to parent component that a switch has been toggled
     this.onToggleUploadOrSelectUploaded.emit(this.uploadFile || this.useUploadedFile);
   }
 
+  /**
+   * Signals to parent that user wants to select a new file from the list of existing ones
+   */
   pickExisting(): void {
     this.selectedNewFile = true;
     this.onShowExistingFiles.emit(this.formGroupSpec);

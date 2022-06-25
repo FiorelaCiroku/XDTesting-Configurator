@@ -8,6 +8,7 @@
   <div class="form-label">Repository</div>
 
   <div class="select-with-loader">
+    <!-- show loader if is loading and repo has not been selected or both repo and branch are selected -->
     <div *ngIf="loading && (!selectedRepo || selectedBranch)" class="loader-wrapper">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -17,6 +18,7 @@
             (ngModelChange)="onRepositorySelection()">
       <option [ngValue]="undefined"></option>
       <ng-container *ngFor="let repo of repos">
+        <!-- skip archived repositories -->
         <option *ngIf="!repo.archived" [ngValue]="repo.full_name">
           {{ repo.full_name }}
         </option>
@@ -30,7 +32,8 @@
   <div class="form-label">Branch</div>
 
   <div class="select-with-loader">
-    <div *ngIf="loading && selectedBranch" class="loader-wrapper">
+    <!-- show loader if loading and repository has been selected -->
+    <div *ngIf="loading && selectedRepo" class="loader-wrapper">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
@@ -38,6 +41,7 @@
     <select class="form-select" required configValidationFeedback [disabled]="!selectedRepo || loading" [(ngModel)]="selectedBranch">
       <option [ngValue]="undefined"></option>
       <ng-container *ngFor="let branch of branches;">
+        <!-- skip protected branches -->
         <option *ngIf="!branch.protected" [ngValue]="branch.name">
           {{ branch.name }}
         </option>

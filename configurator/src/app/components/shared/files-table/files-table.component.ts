@@ -32,7 +32,8 @@ export class FilesTableComponent implements OnChanges {
   }
 
 
-
+  // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+  // for destructuring syntax in parameter list
   ngOnChanges({ files }: { files?: SimpleChange }): void {
     if (!files || !files.currentValue || files.currentValue === files.previousValue) {
       return;
@@ -40,6 +41,7 @@ export class FilesTableComponent implements OnChanges {
 
     const temp: FragmentFile[] = [];
 
+    // for each provided file, try to get the extension if not specified
     for (const f of this.files) {
       let extension = f.extension;
 
@@ -57,6 +59,11 @@ export class FilesTableComponent implements OnChanges {
     this.files = temp;
   }
 
+  /**
+   * Builds an URL to download the file
+   * @param file File to download
+   * @returns URL to navigate to download the file
+   */
   downloadUrl(file: FragmentFile): string {
     if (!this._branch && !this._repository) {
       return '';
@@ -65,6 +72,10 @@ export class FilesTableComponent implements OnChanges {
     return `https://raw.githubusercontent.com/${this._repository}/${this._branch}/${file.path}`;
   }
 
+  /**
+   * Clear table's filters
+   * @param table Table reference to clear
+   */
   clear(table: Table): void {
     table.clear();
     if (this.tableFilter?.nativeElement) {
@@ -72,6 +83,11 @@ export class FilesTableComponent implements OnChanges {
     }
   }
 
+  /**
+   * Filter table based on provided text. Acts as a free-text search field
+   * meaning that it will be searched along all the columns
+   * @param e KeyboardEvent associated to a input element
+   */
   filterContent(e: Event): void {
     const input = e?.target as HTMLInputElement;
 

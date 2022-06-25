@@ -15,6 +15,9 @@ export class DataInputComponent implements OnInit {
 
   formGroup?: TypedFormGroup<TestDetailForm['dataContent']>;
 
+  /**
+   * Label getter
+   */
   get title(): string {
     if (this.withExpectedResults) {
       return 'Sample dataset with expected results';
@@ -25,6 +28,9 @@ export class DataInputComponent implements OnInit {
     return 'Sample dataset';
   }
 
+  /**
+   * Rows getter
+   */
   get rows(): TypedFormGroup<DataSpec>[] {
     return this.formGroup?.controls.rows.controls || [];
   }
@@ -34,9 +40,13 @@ export class DataInputComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // initialize form group here because input are bind when just before this hook fires
     this.formGroup = <TypedFormGroup<TestDetailForm['dataContent']>>(this.controlContainer.control);
   }
 
+  /**
+   * Adds a row to the table updating the form array accordingly
+   */
   addDataRow(): void {
     const formArray: TypedFormArray<DataSpec> | undefined = this.formGroup?.controls.rows;
 
@@ -55,6 +65,9 @@ export class DataInputComponent implements OnInit {
     formArray.push(formGroup);
   }
 
+  /**
+   * Removes a row from the table updating the form array accordingly
+   */
   removeDataRow(i: number): void {
     const formArray = this.formGroup?.controls.rows;
 

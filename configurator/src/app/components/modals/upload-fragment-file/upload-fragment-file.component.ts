@@ -3,7 +3,7 @@ import { FILE_TYPES } from '../../../constants';
 import { ApiService } from '../../../services';
 import { TypedFormControl, TypedFormGroup } from '../../../utils/typed-form';
 import { FileTypes, Fragment } from '../../../models';
-import { markAllAsTouchedOrDirty } from '../../../utils';
+import { markAllAsDirty } from '../../../utils';
 import { catchError, of, tap } from 'rxjs';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 
@@ -23,6 +23,7 @@ export class UploadFragmentFileComponent implements OnInit {
 
 
   constructor(private apiService: ApiService, private config: DynamicDialogConfig) {
+    // create form group in constructor to avoid type issues and angular problems
     this.formGroup = new TypedFormGroup<{fileType: FileTypes, file: FileList}>({
       fileType: new TypedFormControl<FileTypes>(),
       file: new TypedFormControl<FileList>()
@@ -33,31 +34,41 @@ export class UploadFragmentFileComponent implements OnInit {
     //
   }
 
+  /**
+   * Upload fragment file to `/.xd-testing/ontology-name/fragment-name`
+   * @param e Submit event
+   */
   upload(e: Event): void {
     e.preventDefault();
+
+    // get data
+    // data only available from this point on, see https://www.primefaces.org/primeng/dynamicdialog
     const fragment: Fragment = this.config.data.fragment;
 
     if (!fragment) {
-      this.errorMsg = 'Unknown fragment name. Application error';
+      this.errorMsg = 'Unknown fragment. Application error';
       this.showAlert = true;
       return;
     }
 
-
+    // check form group validity and, possibly, mark fields as touched and dirty
     if (!this.formGroup.valid) {
-      markAllAsTouchedOrDirty(this.formGroup);
-      markAllAsTouchedOrDirty(this.formGroup, true);
+      this.formGroup.markAllAsTouched();
+      markAllAsDirty(this.formGroup);
       return;
     }
 
+    // get form value
     const fgValue = this.formGroup.value;
 
+    // should never happen
     if (!fgValue) {
       this.errorMsg = 'Unknown error';
       this.showAlert = true;
       return;
     }
 
+    // disable inputs to prevent user modifications during API call
     this.formGroup.disable();
     this.uploading = true;
 
@@ -76,6 +87,8 @@ export class UploadFragmentFileComponent implements OnInit {
       .subscribe(() => {
         this.uploading = false;
         this.showAlert = true;
+
+        // re-enable form
         this.formGroup.enable();
         $sub.unsubscribe();
       });

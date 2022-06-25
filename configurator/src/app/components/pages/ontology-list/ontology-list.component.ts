@@ -24,18 +24,29 @@ export class OntologyListComponent {
     this._init();
   }
 
+  /**
+   * Opens modal to add ontology
+   */
   addOntologyModal(): void {
     const ref = this.dialogService.open(UploadOntologyComponent, {
       header: 'Add a new ontology'
     });
 
     const $sub = ref.onClose.subscribe(() => {
+      // on modal close, re-initialize page
       this._init();
       $sub.unsubscribe();
     });
   }
 
+  /**
+   * Deletes ontology from `UserInput.json`. Since fragments and tests are associated with
+   * ontology, also them are removed from the file. No file associated with ontology, fragment,
+   * or test will be deleted.
+   * @param name Ontology name
+   */
   deleteOntology(name: string): void {
+    // confirmation before actually deleting the ontology
     const confirmation = confirm('Are you sure? This will delete also all the associated fragments along with their tests. ' +
       'Files won\'t be removed. If you want to delete them, you should do it manually');
 
@@ -70,7 +81,11 @@ export class OntologyListComponent {
       });
   }
 
+  /**
+   * Initializes page's data
+   */
   private _init(): void {
+    // download ontologies list
     const $sub = this.apiService.listOntologies()
       .pipe(catchError((err) => {
         this.errorMsg = err;
@@ -81,11 +96,17 @@ export class OntologyListComponent {
         const toSelect = ontologies.filter(o => !o.userDefined && !o.parsed && !o.ignored);
         this.ontologies = ontologies.filter(o => o.userDefined || (o.parsed && !o.ignored));
 
+        // if new ontologies are found by github's CI plugin, will be shown in a modal
+        // asking the user to keep or discard them
         this._showOntologySelectionModal(toSelect);
         $sub.unsubscribe();
       });
   }
 
+  /**
+   * Opens ontologies selection modal
+   * @param toSelect Ontologies to select
+   */
   private _showOntologySelectionModal(toSelect: Ontology[]): void {
     if (toSelect.length === 0) {
       return;
@@ -99,6 +120,7 @@ export class OntologyListComponent {
     });
 
     const $sub = ref.onClose.subscribe(() => {
+      // on modal close, re-initialize page
       this._init();
       $sub.unsubscribe();
     });
