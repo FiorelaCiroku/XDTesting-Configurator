@@ -78,11 +78,11 @@ import { NgChartsModule } from 'ng2-charts';
 
     // Directives
     FileInputDirective,
-     FragmentDocsComponent,
-     DashboardComponent,
-     TestDocsComponent,
-     TextDetailsComponent,
-     SelectOntologyComponent
+    FragmentDocsComponent,
+    DashboardComponent,
+    TestDocsComponent,
+    TextDetailsComponent,
+    SelectOntologyComponent
   ],
   imports: [
     // Angular

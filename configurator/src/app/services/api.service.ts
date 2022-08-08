@@ -25,7 +25,6 @@ import {
 } from 'rxjs';
 import { baseUrl } from '../../environments/environment';
 import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY, TEST_TYPE_DEFINITIONS, FILE_TYPES } from '../constants';
-import { Router } from '@angular/router';
 import * as moment from 'moment';
 import { encode, decode } from 'js-base64';
 import { filterNullUndefined } from '../utils';
@@ -52,7 +51,7 @@ export class ApiService {
   private userInputPath = `${this.baseDir}/UserInput.json`;
 
 
-  constructor(private _http: HttpClient, private _router: Router) {
+  constructor(private _http: HttpClient) {
   }
 
 

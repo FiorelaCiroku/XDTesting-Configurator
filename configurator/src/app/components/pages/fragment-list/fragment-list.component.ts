@@ -1,7 +1,6 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ApiService } from '../../../services';
 import { Fragment } from '../../../models';
-import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs';
 import { Table } from 'primeng/table';
 
@@ -21,7 +20,7 @@ export class FragmentListComponent {
   @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
 
 
-  constructor(public apiService: ApiService, private _router: Router) {
+  constructor(public apiService: ApiService) {
     // get fragment list
     const $sub = apiService.getFragments()
       .subscribe(fragments => {

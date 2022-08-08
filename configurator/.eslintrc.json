@@ -10,6 +10,7 @@
   ],
   "ignorePatterns": [
     "node_modules",
+    "karma.conf.js",
     "*.html",
     "*.scss"
   ],
