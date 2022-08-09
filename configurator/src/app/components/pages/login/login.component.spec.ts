@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -24,7 +24,8 @@ describe('LoginComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ LoginComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

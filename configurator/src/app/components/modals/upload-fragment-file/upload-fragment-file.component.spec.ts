@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ApiService } from 'src/app/services';
@@ -21,7 +21,8 @@ describe('UploadFragmentFileComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ UploadFragmentFileComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

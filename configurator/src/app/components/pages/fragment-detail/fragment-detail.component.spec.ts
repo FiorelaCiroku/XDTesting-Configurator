@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -25,7 +25,8 @@ describe('FragmentDetailComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ FragmentDetailComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

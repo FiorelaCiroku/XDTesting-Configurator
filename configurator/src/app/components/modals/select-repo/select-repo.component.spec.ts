@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { Observable, of } from 'rxjs';
@@ -26,7 +26,8 @@ describe('SelectRepoComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ SelectOntologyComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

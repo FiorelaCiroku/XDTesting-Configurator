@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { SelectOntologyComponent } from './select-ontology.component';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ApiService } from 'src/app/services';
@@ -21,7 +21,8 @@ describe('SelectOntologyComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ SelectOntologyComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

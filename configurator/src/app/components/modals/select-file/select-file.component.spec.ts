@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ApiService } from 'src/app/services';
@@ -24,7 +24,8 @@ describe('SelectFileComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ SelectFileComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });

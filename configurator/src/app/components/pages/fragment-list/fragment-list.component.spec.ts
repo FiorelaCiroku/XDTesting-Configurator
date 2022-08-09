@@ -1,4 +1,4 @@
-import { Provider } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { Fragment } from 'src/app/models';
@@ -22,7 +22,8 @@ describe('FragmentListComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ FragmentListComponent ],
-      providers
+      providers,
+      schemas: [NO_ERRORS_SCHEMA]
     })
     .compileComponents();
   });
