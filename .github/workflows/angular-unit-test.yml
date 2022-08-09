@@ -38,7 +38,14 @@ jobs:
           npm test -- --no-watch --no-progress --browsers=ChromeHeadlessCI --code-coverage
         
       # Create report
-      - name: Test Report
+      - name: Generate Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: configurator/coverage/ng-test/cobertura-coverage.xml
+          format: markdown
+          output: file
+          
+      # Output job summary. See https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+      - name: Output Summary
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+        
