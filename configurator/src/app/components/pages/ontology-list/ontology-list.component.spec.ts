@@ -12,8 +12,7 @@ const apiService = {
 } as ApiService;
 const dialogServiceMock = {} as DialogService;
 const providers: Provider[] = [
-  { provide: ApiService, useValue: apiService },
-  { provide: DialogService, useValue: dialogServiceMock }
+  { provide: ApiService, useValue: apiService }
 ];
 
 describe('OntologyListComponent', () => {
@@ -25,6 +24,13 @@ describe('OntologyListComponent', () => {
       declarations: [ OntologyListComponent ],
       providers,
       schemas: [NO_ERRORS_SCHEMA]
+    })
+    .overrideComponent(OntologyListComponent, {
+      set: {
+        providers: [
+          { provide: DialogService, useValue: dialogServiceMock }
+        ]
+      }
     })
     .compileComponents();
   });

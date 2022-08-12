@@ -14,8 +14,7 @@ const activatedRouteMock = {
 const dialogServiceMock = {} as DialogService;
 const providers: Provider[] = [
   { provide: ApiService, useValue: apiService },
-  { provide: ActivatedRoute, useValue: activatedRouteMock },
-  { provide: DialogService, useValue: dialogServiceMock }
+  { provide: ActivatedRoute, useValue: activatedRouteMock }
 ];
 
 describe('FragmentDetailComponent', () => {
@@ -27,6 +26,13 @@ describe('FragmentDetailComponent', () => {
       declarations: [ FragmentDetailComponent ],
       providers,
       schemas: [NO_ERRORS_SCHEMA]
+    })
+    .overrideComponent(FragmentDetailComponent, {
+      set: {
+        providers: [
+          { provide: DialogService, useValue: dialogServiceMock }
+        ]
+      }
     })
     .compileComponents();
   });

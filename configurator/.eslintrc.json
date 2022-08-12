@@ -33,6 +33,12 @@
       "rules": {
         "@typescript-eslint/explicit-function-return-type": ["error"]
       }
+    },
+    {
+      "files": ["*.spec.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
     }
   ]
 }

@@ -3,6 +3,7 @@ import { ApiService } from '../../services';
 import { SELECTED_BRANCH_KEY, SELECTED_REPO_KEY } from '../../constants';
 import { DialogService } from 'primeng/dynamicdialog';
 import { SelectRepoComponent } from '../modals';
+import { WindowWrapper } from 'src/app/wrappers';
 
 @Component({
   selector: 'config-layout',
@@ -37,7 +38,7 @@ export class LayoutComponent {
       const currentBranch = localStorage.getItem(SELECTED_BRANCH_KEY);
 
       if (currentBranch !== previousBranch || currentRepo !== previousRepo) {
-        window.location.reload();
+        WindowWrapper.reload();
       }
 
       $sub.unsubscribe();

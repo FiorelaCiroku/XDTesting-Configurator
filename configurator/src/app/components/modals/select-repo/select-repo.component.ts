@@ -4,6 +4,7 @@ import { Repository, ShortBranch } from '../../../models';
 import { ApiService } from '../../../services';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { forkJoin, Observable, tap } from 'rxjs';
+import { WindowWrapper } from 'src/app/wrappers';
 
 @Component({
   selector: 'config-select-repo',
@@ -109,7 +110,7 @@ export class SelectRepoComponent {
 
     // if previous selections are different w.r.t. the current ones, reload page
     if (previousRepo !== this.selectedRepo || previousBranch !== this.selectedBranch) {
-      window.location.reload();
+      WindowWrapper.reload();
     }
   }
 }
