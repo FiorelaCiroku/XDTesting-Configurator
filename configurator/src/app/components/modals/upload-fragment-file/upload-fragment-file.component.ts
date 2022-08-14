@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FILE_TYPES } from '../../../constants';
 import { ApiService } from '../../../services';
 import { TypedFormControl, TypedFormGroup } from '../../../utils/typed-form';
@@ -12,7 +12,7 @@ import { DynamicDialogConfig } from 'primeng/dynamicdialog';
   templateUrl: './upload-fragment-file.component.html',
   styleUrls: ['./upload-fragment-file.component.scss']
 })
-export class UploadFragmentFileComponent implements OnInit {
+export class UploadFragmentFileComponent {
 
   successMsg?: string;
   errorMsg?: string;
@@ -30,20 +30,20 @@ export class UploadFragmentFileComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    //
-  }
-
   /**
    * Upload fragment file to `/.xd-testing/ontology-name/fragment-name`
    * @param e Submit event
    */
   upload(e: Event): void {
+    this.errorMsg = undefined;
+    this.successMsg = undefined;
+    this.showAlert = false;
+
     e.preventDefault();
 
     // get data
     // data only available from this point on, see https://www.primefaces.org/primeng/dynamicdialog
-    const fragment: Fragment = this.config.data.fragment;
+    const fragment: Fragment = this.config.data?.fragment;
 
     if (!fragment) {
       this.errorMsg = 'Unknown fragment. Application error';

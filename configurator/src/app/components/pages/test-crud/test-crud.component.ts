@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services';
 import {
@@ -9,7 +9,6 @@ import {
   map,
   Observable,
   of,
-  Subscription,
   switchMap,
   throwError,
   toArray,
@@ -43,7 +42,7 @@ import { Summary } from '../../shared/summary/summary.component';
   styleUrls: ['./test-crud.component.scss'],
   providers: [DialogService]
 })
-export class TestCrudComponent implements OnDestroy {
+export class TestCrudComponent {
 
   fragment?: Fragment;
   test?: TestDetail;
@@ -63,10 +62,7 @@ export class TestCrudComponent implements OnDestroy {
   useExpectedResultsFile = false;
 
 
-  @ViewChild('alert', {read: ElementRef}) alert!: ElementRef<HTMLElement>;
-
-
-  private _fragmentsSub?: Subscription;
+  @ViewChild('alert', { read: ElementRef }) alert!: ElementRef<HTMLElement>;
 
 
   constructor(private _route: ActivatedRoute, private _apiService: ApiService, private _dialogService: DialogService) {
@@ -100,10 +96,6 @@ export class TestCrudComponent implements OnDestroy {
     // form sub-components initialization
     // NOTE: sub-components refers to `config-data-input` and `config-file-input`
     this._initFormGroupSpecs();
-  }
-
-  ngOnDestroy(): void {
-    this._fragmentsSub?.unsubscribe();
   }
 
   /**
@@ -207,7 +199,7 @@ export class TestCrudComponent implements OnDestroy {
     }
 
     // Check for required fields
-    if (!this._checkRequired()) {
+    if (!this._checkRequired(formValue)) {
       return;
     }
 
@@ -215,9 +207,9 @@ export class TestCrudComponent implements OnDestroy {
     toggleDisableControls(this.fg);
 
     // check and upload files and, possibly, update form group
-    const $queryFileUpload = this._uploadFiles(this.fg.controls.query, 'query', true);
-    const $dataFileUpload = this._uploadFiles(this.fg.controls.data, 'dataset');
-    const $expectedResultsFileUpload = this._uploadFiles(this.fg.controls.expectedResults, 'expectedResults');
+    const $queryFileUpload = this._uploadFiles(fragment, this.fg.controls.query, 'query', true);
+    const $dataFileUpload = this._uploadFiles(fragment, this.fg.controls.data, 'dataset');
+    const $expectedResultsFileUpload = this._uploadFiles(fragment, this.fg.controls.expectedResults, 'expectedResults');
 
     // create new test specification to save to UserInput.json
     let updateValue: Omit<TestDetail, 'id'> = {
@@ -232,41 +224,43 @@ export class TestCrudComponent implements OnDestroy {
     lastValueFrom(concat($queryFileUpload, $dataFileUpload, $expectedResultsFileUpload)
       .pipe(toArray())
       .pipe(switchMap((results: ApiResult<{ fileName?: string; content?: string }>[]) => {
-          const success = results.reduce((prev, current) => prev && current.success, true);
-          if (!success) {
-            return throwError(() => results.map(r => r.message).filter(m => !!m).join(', '));
+        const success = results.reduce((prev, current) => prev && current.success, true);
+        if (!success) {
+          return throwError(() => results.map(r => r.message).filter(m => !!m).join(', '));
+        }
+
+        // update test final specification
+        const [queryRes, dataRes, erRes] = results;
+        updateValue = {
+          ...updateValue,
+          query: queryRes.data?.content,
+          queryFileName: queryRes.data?.fileName,
+
+          data: (formValue.dataContent.prefixes || '') + '\n\n',
+          dataFileName: dataRes.data?.fileName,
+
+          expectedResults: (formValue.dataContent.prefixes || '') + '\n\n',
+          expectedResultsFileName: erRes.data?.fileName,
+        };
+
+        // create data and expected results turtle files from data table rows
+        for (const r of formValue.dataContent.rows) {
+          const data = `${r.subject} ${r.predicate} ${r.object}\n`;
+          updateValue.data += data;
+
+          if (r.expectedResult) {
+            updateValue.expectedResults += data;
           }
+        }
 
-          // update test final specification
-          const [queryRes, dataRes, erRes] = results;
-          updateValue = {
-            ...updateValue,
-            query: queryRes.data?.content,
-            queryFileName: queryRes.data?.fileName,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        updateValue.data = updateValue.data!.trim();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        updateValue.expectedResults = updateValue.expectedResults!.trim();
 
-            data: (formValue.dataContent.prefixes || '') + '\n\n',
-            dataFileName: dataRes.data?.fileName,
-
-            expectedResults: (formValue.dataContent.prefixes || '') + '\n\n',
-            expectedResultsFileName: erRes.data?.fileName,
-          };
-
-          // create data and expected results turtle files from data table rows
-          for (const r of formValue.dataContent.rows) {
-            const data = `${r.subject} ${r.predicate} ${r.object}\n`;
-            updateValue.data += data;
-
-            if (r.expectedResult) {
-              updateValue.expectedResults += data;
-            }
-          }
-
-          updateValue.data = updateValue.data?.trim();
-          updateValue.expectedResults = updateValue.expectedResults?.trim();
-
-          // upload fragment test
-          return this._apiService.updateFragmentTest(fragment, updateValue, this.test?.id);
-        })
+        // upload fragment test
+        return this._apiService.updateFragmentTest(fragment, updateValue, this.test?.id);
+      })
       )).finally(() => toggleDisableControls(this.fg))
       .then(result => {
         this.saved = result.success;
@@ -285,11 +279,11 @@ export class TestCrudComponent implements OnDestroy {
    */
   private _init(): void {
     // get route parameters and fragment
-    this._route.params
+    const sub$ = this._route.params
       .pipe(switchMap((p: EditFragmentTestParams): Observable<[Fragment, EditFragmentTestParams]> => {
         const chunks = p.fragmentName?.split('_');
 
-        if (!p.fragmentName || chunks?.length < 2) {
+        if (!p.fragmentName || chunks.length < 2) {
           return throwError(() => 'Empty or incorrect parameter name provided. Expected ontologyName_fragmentName');
         }
 
@@ -323,6 +317,8 @@ export class TestCrudComponent implements OnDestroy {
         if (testDetail) {
           this._updateFormGroup(testDetail);
         }
+
+        setTimeout(() => { sub$.unsubscribe(); });
       });
   }
 
@@ -365,7 +361,7 @@ export class TestCrudComponent implements OnDestroy {
 
       // data chunks are divided by a spaces
       const [subject, predicate, object, graph] = r.split(' ');
-      return {expectedResult, subject, predicate, object, graph};
+      return { expectedResult, subject, predicate, object, graph };
     });
 
     // push rows into corresponding form array
@@ -382,10 +378,10 @@ export class TestCrudComponent implements OnDestroy {
     }
 
     this.fg.patchValue({
-      query: {content: test.query, fileName: test.queryFileName},
-      data: {fileName: test.dataFileName},
-      expectedResults: {fileName: test.expectedResultsFileName},
-      dataContent: {prefixes, rows},
+      query: { content: test.query, fileName: test.queryFileName },
+      data: { fileName: test.dataFileName },
+      expectedResults: { fileName: test.expectedResultsFileName },
+      dataContent: { prefixes, rows },
     });
 
     // initialize sub-components specifications
@@ -470,20 +466,13 @@ export class TestCrudComponent implements OnDestroy {
    * form fields can fool angular, all fields are set non-required and checks are
    * done manually with this function
    */
-  private _checkRequired(): boolean {
+  private _checkRequired(fgValue: TestDetailForm): boolean {
     // reset error messages
     this._resetMessages();
 
-    // check for form group value
-    // should never be true
-    if (!this.fg.value) {
-      this._showError('Application error: Unable to retrieve form value');
-      return false;
-    }
-
     const errors: string[] = [];
-    const {type, query, data, expectedResults, dataContent} = this.fg.value;
-    const filledDataRows = (dataContent.rows || []).filter(r => !!r.subject && !!r.predicate && !!r.object);
+    const { type, query, data, expectedResults, dataContent } = fgValue;
+    const filledDataRows = dataContent.rows.filter(r => !!r.subject && !!r.predicate && !!r.object);
     const countExpectedResults = filledDataRows.filter(r => r.expectedResult).length;
     const countDataRows = filledDataRows.length;
 
@@ -543,14 +532,13 @@ export class TestCrudComponent implements OnDestroy {
    * @param hasContent Whether to pass back form group `content` or not
    * @returns Observable of ApiResult
    */
-  private _uploadFiles(fg: TypedFormGroup<FileInputFormGroup>, type: FileTypes, hasContent = false): Observable<ApiResult<{ fileName?: string; content?: string }>> {
+  private _uploadFiles(fragment: Fragment, fg: TypedFormGroup<FileInputFormGroup>, type: FileTypes, hasContent = false): Observable<ApiResult<{ fileName?: string; content?: string }>> {
     const fgVal = fg.value;
-    const fragment = this.fragment;
 
-    // check for fragment and form group value.
+    // check for fragment value
     // should never be true
-    if (!fgVal || !fragment) {
-      return throwError(() => 'Application error: Could not get form value or fragment empty');
+    if (!fgVal) {
+      return throwError(() => 'Application error: Could not get form value');
     }
 
     let $obs: Observable<ApiResult<string>> | undefined;
@@ -559,7 +547,7 @@ export class TestCrudComponent implements OnDestroy {
       $obs = this._apiService.uploadTestFile(fgVal.file[0], type, fragment);
     } else if (fgVal.fileName) {
       // if no file is provided, return a fake observable
-      $obs = of({success: true, data: fgVal.fileName});
+      $obs = of({ success: true, data: fgVal.fileName });
     }
 
     if ($obs) {
@@ -575,17 +563,17 @@ export class TestCrudComponent implements OnDestroy {
 
         return {
           ...res,
-          data: {fileName}
+          data: { fileName }
         };
       }));
     }
 
     if (hasContent && fgVal.content) {
-      return of({success: true, data: {content: fgVal.content}});
+      return of({ success: true, data: { content: fgVal.content } });
     }
 
 
-    return of({success: true, data: {}});
+    return of({ success: true, data: {} });
   }
 
   /**
@@ -595,7 +583,7 @@ export class TestCrudComponent implements OnDestroy {
   private _showError(error?: string): void {
     this.saveErrorMsg = error;
     this.showAlert = true;
-    this.alert.nativeElement?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    this.alert.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /**

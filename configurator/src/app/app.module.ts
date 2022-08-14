@@ -4,12 +4,17 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+import { NgChartsModule } from 'ng2-charts';
+
 import { AccordionModule } from 'primeng/accordion';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { DynamicDialogModule } from 'primeng/dynamicdialog';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TableModule } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -19,32 +24,24 @@ import { HttpInterceptorService } from './services';
 import { AlertComponent } from './components/utils';
 import {
   SelectFileComponent,
+  SelectOntologyComponent,
   SelectRepoComponent,
+  TextDetailsComponent,
   UploadFragmentFileComponent,
   UploadOntologyComponent
 } from './components/modals';
 import {
   CreateFragmentComponent,
-  TestCrudComponent, FragmentDetailComponent,
+  FragmentDetailComponent,
   FragmentListComponent,
-  LoginComponent
+  LoginComponent,
+  OntologyListComponent,
+  DocsComponent,
+  DashboardComponent,
 } from './components/pages';
-import { FilesTableComponent } from './components/shared/files-table/files-table.component';
-import { FileInputComponent } from './components/pages/test-crud/file-input/file-input.component';
-import { SummaryComponent } from './components/shared/summary/summary.component';
-import { InputTextModule } from 'primeng/inputtext';
-import { DataInputComponent } from './components/pages/test-crud/data-input/data-input.component';
-import { OntologyListComponent } from './components/pages/ontology-list/ontology-list.component';
-import { DocsComponent } from './components/pages/docs/docs.component';
-import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.component';
-import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
-import { TestDocsComponent } from './components/pages/docs/test-docs.component';
-import { TooltipModule } from 'primeng/tooltip';
-import { MultiSelectModule } from 'primeng/multiselect';
-import { TextDetailsComponent } from './components/modals/text-details/text-details.component';
-import { DashboardComponent } from './components/pages/dashboard/dashboard.component';
-import { SelectOntologyComponent } from './components/modals/select-ontology/select-ontology.component';
-import { NgChartsModule } from 'ng2-charts';
+import { TestCrudComponent, FileInputComponent, DataInputComponent } from './components/pages/test-crud';
+import { OntologyDocsComponent, FragmentDocsComponent, TestDocsComponent, } from './components/pages/docs';
+import { FilesTableComponent, SummaryComponent } from './components/shared';
 
 
 @NgModule({
@@ -108,7 +105,7 @@ import { NgChartsModule } from 'ng2-charts';
     NgChartsModule,
   ],
   providers: [
-    {provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true},
+    { provide: HTTP_INTERCEPTORS, useClass: HttpInterceptorService, multi: true },
   ],
   bootstrap: [AppComponent]
 })

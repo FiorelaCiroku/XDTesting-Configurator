@@ -4,6 +4,7 @@ import { catchError, EMPTY, filter, from, of, Subscription, switchMap} from 'rxj
 import { ActivatedRoute, Router } from '@angular/router';
 import { LoginAuthParams } from '../../../models';
 import { baseUrl } from '../../../../environments/environment';
+import { filterNullUndefined } from 'src/app/utils';
 
 @Component({
   selector: 'config-login',
@@ -21,7 +22,7 @@ export class LoginComponent implements OnDestroy {
 
   constructor(private httpClient: HttpClient, private route: ActivatedRoute, private router: Router) {
     this._sub = this.route.queryParams
-      .pipe(filter((p) => !!p))
+      .pipe(filter(filterNullUndefined))
       .pipe(switchMap((params: LoginAuthParams) => {
         if (route.routeConfig?.path === 'auth' && params.code) {
           this.authenticating = true;

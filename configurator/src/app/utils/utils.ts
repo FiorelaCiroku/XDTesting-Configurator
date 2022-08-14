@@ -5,7 +5,7 @@ import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
  * @param val any value to test
  * @returns {boolean} Whether if `val` is actually of type T
  */
-export function filterNullUndefined<T>(val?: T | null): val is T {
+export function filterNullUndefined<T>(val: T): val is NonNullable<T> {
   return val !== null && val !== undefined;
 }
 

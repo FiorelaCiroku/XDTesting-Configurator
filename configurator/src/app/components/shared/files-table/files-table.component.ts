@@ -65,7 +65,7 @@ export class FilesTableComponent implements OnChanges {
    * @returns URL to navigate to download the file
    */
   downloadUrl(file: FragmentFile): string {
-    if (!this._branch && !this._repository) {
+    if (!this._branch || !this._repository) {
       return '';
     }
 
@@ -76,8 +76,9 @@ export class FilesTableComponent implements OnChanges {
    * Clear table's filters
    * @param table Table reference to clear
    */
-  clear(table: Table): void {
-    table.clear();
+  clear(): void {
+    this.table?.clear();
+
     if (this.tableFilter?.nativeElement) {
       this.tableFilter.nativeElement.value = '';
     }
@@ -89,8 +90,9 @@ export class FilesTableComponent implements OnChanges {
    * @param e KeyboardEvent associated to a input element
    */
   filterContent(e: Event): void {
-    const input = e?.target as HTMLInputElement;
+    const input = e.target as (HTMLInputElement | null);
 
+    console.log(input);
     if (!input) {
       return;
     }

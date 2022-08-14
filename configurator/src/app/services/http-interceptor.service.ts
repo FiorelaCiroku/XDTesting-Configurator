@@ -41,7 +41,7 @@ export class HttpInterceptorService implements HttpInterceptor {
         // any other requests returning EMPTY
         if (err.status === 401) {
           this._setLoading(reqUrl, false);
-          this.authService.$isAuthenticated.next(false);
+          this.authService.isAuthenticated = false;
           this.router.navigate([this.authService.loginUrl.toString()]);
           return EMPTY;
         }

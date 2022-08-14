@@ -3,6 +3,7 @@ import { ApiService } from '../../../services';
 import { Fragment } from '../../../models';
 import { switchMap, tap } from 'rxjs';
 import { Table } from 'primeng/table';
+import { WindowWrapper } from 'src/app/wrappers';
 
 @Component({
   selector: 'config-fragment-list',
@@ -33,8 +34,9 @@ export class FragmentListComponent {
    * Clears table's filters
    * @param table table on which to operate
    */
-  clear(table: Table): void {
-    table.clear();
+  clear(): void {
+    this.table?.clear();
+
     if (this.tableFilter?.nativeElement) {
       this.tableFilter.nativeElement.value = '';
     }
@@ -60,7 +62,7 @@ export class FragmentListComponent {
    */
   removeFragment(fragment: Fragment): void {
     // Browser native confirmation. Asks user to confirm operation before actually execute it.
-    if (!confirm('Are you sure? All data will be lost')) {
+    if (!WindowWrapper.confirm('Are you sure? All data will be lost')) {
       return;
     }
 
@@ -72,7 +74,7 @@ export class FragmentListComponent {
         this.showAlert = true;
 
         if (!result.success) {
-          this.error = result.message || `Unknown error during deletion of fragment ${name}`;
+          this.error = result.message || `Unknown error during deletion of fragment ${fragment.name}`;
         }
       }))
       .pipe(switchMap(() => this.apiService.getFragments()))

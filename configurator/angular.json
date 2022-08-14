@@ -130,7 +130,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": "src/polyfills-specs.ts",
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
@@ -141,7 +141,15 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "codeCoverageExclude": [
+              "src/*",
+              "src/app/constants.ts",
+              "src/app/utils/**/*",
+              "src/app/wrappers/**/*",
+              "src/app/models/**/*",
+              "src/environments/**/*"
+            ]
           }
         }
       }

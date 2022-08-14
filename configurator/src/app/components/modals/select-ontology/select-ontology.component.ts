@@ -48,7 +48,7 @@ export class SelectOntologyComponent implements OnInit {
 
     this.saving = true;
 
-    this.apiService.updateOntologies(this.toSelect)
+    const $sub = this.apiService.updateOntologies(this.toSelect)
       .pipe(catchError((err): Observable<ApiResult> => {
         return of({success: false, message: err});
       }))
@@ -57,6 +57,8 @@ export class SelectOntologyComponent implements OnInit {
         this.message = result.success ? 'Ontologies saved successfully' : result.message;
         this.showAlert = true;
         this.saving = false;
+
+        setTimeout(() => { $sub.unsubscribe(); });
       });
   }
 }

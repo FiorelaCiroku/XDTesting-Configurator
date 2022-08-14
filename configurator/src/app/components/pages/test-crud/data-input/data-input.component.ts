@@ -71,7 +71,7 @@ export class DataInputComponent implements OnInit {
   removeDataRow(i: number): void {
     const formArray = this.formGroup?.controls.rows;
 
-    if (!formArray) {
+    if (!formArray || i < 0 || i >= formArray.length) {
       return;
     }
 

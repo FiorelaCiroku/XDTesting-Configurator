@@ -2,9 +2,10 @@ import { Component } from '@angular/core';
 import { Ontology } from '../../../models';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ApiService } from '../../../services';
-import { catchError, of, switchMap, tap } from 'rxjs';
+import { catchError, Observable, of, switchMap, tap } from 'rxjs';
 import { UploadOntologyComponent } from '../../modals';
 import { SelectOntologyComponent } from '../../modals/select-ontology/select-ontology.component';
+import { WindowWrapper } from 'src/app/wrappers';
 
 @Component({
   selector: 'config-ontology-list',
@@ -21,7 +22,9 @@ export class OntologyListComponent {
   deleting = false;
 
   constructor(readonly apiService: ApiService, private dialogService: DialogService) {
-    this._init();
+    const $sub = this._init().subscribe(() => {
+      setTimeout(() => { $sub.unsubscribe(); });
+    });
   }
 
   /**
@@ -32,11 +35,14 @@ export class OntologyListComponent {
       header: 'Add a new ontology'
     });
 
-    const $sub = ref.onClose.subscribe(() => {
-      // on modal close, re-initialize page
-      this._init();
-      $sub.unsubscribe();
-    });
+    const $sub = ref.onClose
+      .pipe(switchMap(() => {
+        // on modal close, re-initialize page
+        return this._init();
+      }))
+      .subscribe(() => {
+        setTimeout(() => { $sub.unsubscribe(); });
+      });
   }
 
   /**
@@ -47,7 +53,7 @@ export class OntologyListComponent {
    */
   deleteOntology(name: string): void {
     // confirmation before actually deleting the ontology
-    const confirmation = confirm('Are you sure? This will delete also all the associated fragments along with their tests. ' +
+    const confirmation = WindowWrapper.confirm('Are you sure? This will delete also all the associated fragments along with their tests. ' +
       'Files won\'t be removed. If you want to delete them, you should do it manually');
 
     if (!confirmation) {
@@ -64,7 +70,7 @@ export class OntologyListComponent {
         if (res.success) {
           this.successMsg = 'Ontology deleted successfully';
         } else {
-          this.errorMsg = res.message;
+          this.errorMsg = res.message || `Unknown error during deletion of ontology ${name}`;
         }
 
         this.showAlert = true;
@@ -84,23 +90,22 @@ export class OntologyListComponent {
   /**
    * Initializes page's data
    */
-  private _init(): void {
+  private _init(): Observable<Ontology[]> {
     // download ontologies list
-    const $sub = this.apiService.listOntologies()
+    return this.apiService.listOntologies()
       .pipe(catchError((err) => {
         this.errorMsg = err;
         this.showAlert = true;
         return of([]);
       }))
-      .subscribe((ontologies) => {
+      .pipe(tap((ontologies) => {
         const toSelect = ontologies.filter(o => !o.userDefined && !o.parsed && !o.ignored);
         this.ontologies = ontologies.filter(o => o.userDefined || (o.parsed && !o.ignored));
 
         // if new ontologies are found by github's CI plugin, will be shown in a modal
         // asking the user to keep or discard them
         this._showOntologySelectionModal(toSelect);
-        $sub.unsubscribe();
-      });
+      }));
   }
 
   /**
@@ -119,10 +124,13 @@ export class OntologyListComponent {
       }
     });
 
-    const $sub = ref.onClose.subscribe(() => {
-      // on modal close, re-initialize page
-      this._init();
-      $sub.unsubscribe();
-    });
+    const $sub = ref.onClose
+      .pipe(switchMap(() => {
+        // on modal close, re-initialize page
+        return this._init();
+      }))
+      .subscribe(() => {
+        setTimeout(() => { $sub.unsubscribe(); });
+      });
   }
 }

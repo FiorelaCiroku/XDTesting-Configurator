@@ -26,28 +26,34 @@ describe('LayoutComponent', () => {
   beforeEach(async () => {
     $close = new Subject<void>();
 
-    const apiServiceMock: Partial<ApiService> = {
-      $loading: new BehaviorSubject<boolean>(false),
-    };
-
-    const dynamicDialogRefMock: Partial<DynamicDialogRef> = jasmine.createSpyObj('dynamicDialogRef', [], {
-      onClose: $close.asObservable()
-    });
-
-    const dialogServiceMock: Partial<DialogService> = {
-      open: jasmine.createSpy('open').and.returnValue(dynamicDialogRefMock)
-    };
-
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule],
       declarations: [ LayoutComponent ],
       providers: [
-        { provide: ApiService, useValue: apiServiceMock }
+        {
+          provide: ApiService,
+          useValue: {
+            $loading: new BehaviorSubject<boolean>(false),
+          }
+        }
       ],
       schemas: [NO_ERRORS_SCHEMA]
     })
     .overrideComponent(LayoutComponent, {
-      set: { providers: [{ provide: DialogService, useValue: dialogServiceMock }] }
+      set: {
+        providers: [
+          {
+            provide: DialogService,
+            useValue: {
+              open: jasmine.createSpy('open').and.returnValue(
+                jasmine.createSpyObj<DynamicDialogRef>('dynamicDialogRef', [], {
+                  onClose: $close.asObservable()
+                }
+              ))
+            }
+          }
+        ]
+      }
     })
     .compileComponents();
   });

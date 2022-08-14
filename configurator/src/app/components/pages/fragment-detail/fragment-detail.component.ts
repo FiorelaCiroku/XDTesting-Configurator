@@ -16,6 +16,7 @@ import { Table } from 'primeng/table';
 import { DialogService } from 'primeng/dynamicdialog';
 import { UploadFragmentFileComponent } from '../../modals';
 import { TextDetailsComponent } from '../../modals/text-details/text-details.component';
+import { WindowWrapper } from 'src/app/wrappers';
 
 @Component({
   selector: 'config-fragment-detail',
@@ -34,12 +35,12 @@ export class FragmentDetailComponent {
   deleting = false;
   fragmentFiles: FragmentFile[] = [];
   uploading = false;
-  statusOptions: Array<{icon: string; value: TestStatus}>;
-  statusIcons: {[k in TestStatus]: string};
+  statusOptions: Array<{ icon: string; value: TestStatus }>;
+  statusIcons: { [k in TestStatus]: string };
 
   // gets table and table filter elements' class instance
-  @ViewChild('table', {read: Table}) table?: Table;
-  @ViewChild('tableFilter', {read: ElementRef}) tableFilter?: ElementRef<HTMLInputElement>;
+  @ViewChild('table', { read: Table }) table?: Table;
+  @ViewChild('tableFilter', { read: ElementRef }) tableFilter?: ElementRef<HTMLInputElement>;
 
   constructor(private _route: ActivatedRoute, public apiService: ApiService, public dialogService: DialogService) {
     this._initFragment();
@@ -71,8 +72,8 @@ export class FragmentDetailComponent {
    * Clears table's filters
    * @param table table on which to operate
    */
-  clear(table: Table): void {
-    table.clear();
+  clear(): void {
+    this.table?.clear();
     if (this.tableFilter?.nativeElement) {
       this.tableFilter.nativeElement.value = '';
     }
@@ -83,7 +84,7 @@ export class FragmentDetailComponent {
    * @param e Search event
    */
   filterContent(e: Event): void {
-    const input = e?.target as HTMLInputElement;
+    const input = e.target as HTMLInputElement;
 
     if (!input) {
       return;
@@ -98,7 +99,7 @@ export class FragmentDetailComponent {
    */
   deleteTest(testId: string): void {
     // Browser confirmation before actually performing deletion
-    if (!confirm('Are you sure? Test data will be removed but files associated to it won\'t be deleted')) {
+    if (!WindowWrapper.confirm('Are you sure? Test data will be removed but files associated to it won\'t be deleted')) {
       return;
     }
 
@@ -124,7 +125,7 @@ export class FragmentDetailComponent {
       .subscribe(res => {
         this.fragment = res;
         this.tests = res.tests || [];
-        this.successMsg = 'Test deleted successfully.';
+        this.successMsg = this.errorMsg ? undefined : 'Test deleted successfully.';
         this.showAlert = true;
         this.deleting = false;
         $sub.unsubscribe();
@@ -142,14 +143,17 @@ export class FragmentDetailComponent {
       }
     });
 
-    const $sub = ref.onClose.subscribe(() => {
-      if (this.fragment) {
-        // re-initialize page after modal closes
-        this._initFiles();
-      }
-
-      $sub.unsubscribe();
-    });
+    const $sub = ref.onClose
+      .pipe(switchMap(() => {
+        if (this.fragment) {
+          // re-initialize page after modal closes
+          return this._initFiles();
+        }
+        return of(undefined);
+      }))
+      .subscribe(() => {
+        setTimeout(() => { $sub.unsubscribe(); });
+      });
   }
 
   /**
@@ -164,7 +168,7 @@ export class FragmentDetailComponent {
         return this.apiService.getFragment(fragmentName, ontologyName)
           .pipe(tap((result) => {
             this.fragment = result;
-            this.tests = result?.tests || [];
+            this.tests = result.tests || [];
           }));
       }))
       .pipe(switchMap(() =>

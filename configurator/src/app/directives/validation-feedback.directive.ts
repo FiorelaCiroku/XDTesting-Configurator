@@ -15,7 +15,7 @@ export class ValidationFeedbackDirective implements DoCheck {
   private _lastStatus?: 'VALID' | 'INVALID';
 
 
-  constructor(private _ngControl: NgControl, private _hostEl: ElementRef<HTMLInputElement>, private _renderer2: Renderer2) {
+  constructor(private _ngControl: NgControl, private _renderer2: Renderer2, private _hostEl?: ElementRef<HTMLInputElement>) {
   }
 
 
@@ -45,19 +45,27 @@ export class ValidationFeedbackDirective implements DoCheck {
     }
   }
 
-  private _handleValid(element: HTMLElement): void {
+  private _handleValid(controlElement: HTMLElement): void {
     // set current status
     this._lastStatus = 'VALID';
 
     // remove invalid classes and valid one
-    this._renderer2.removeClass(element, 'is-invalid');
-    this._renderer2.addClass(element, 'is-valid');
+    this._renderer2.removeClass(controlElement, 'is-invalid');
+    this._renderer2.addClass(controlElement, 'is-valid');
 
 
     // remove invalid feedback
-    let nextSibling: Element | null;
-    while ((nextSibling = element.nextElementSibling) && nextSibling?.classList?.contains('invalid-feedback')) {
-      nextSibling.remove();
+    let element: Element = controlElement;
+    let sibling = element.nextElementSibling;
+
+    while (sibling !== null) {
+      if (sibling.classList.contains('invalid-feedback')) {
+        sibling.remove();
+      } else {
+        element = sibling;
+      }
+
+      sibling = element.nextElementSibling;
     }
 
     // add valid feedback
@@ -70,22 +78,30 @@ export class ValidationFeedbackDirective implements DoCheck {
       feedback.classList.add('valid-feedback');
 
       // insert element after input
-      element.insertAdjacentElement('afterend', feedback);
+      controlElement.insertAdjacentElement('afterend', feedback);
     }
   }
 
-  private _handleInvalid(element: HTMLElement, control: AbstractControl): void {
+  private _handleInvalid(controlElement: HTMLElement, control: AbstractControl): void {
     // set current status
     this._lastStatus = 'INVALID';
 
     // remove invalid classes and valid one
-    this._renderer2.removeClass(element, 'is-valid');
-    this._renderer2.addClass(element, 'is-invalid');
+    this._renderer2.removeClass(controlElement, 'is-valid');
+    this._renderer2.addClass(controlElement, 'is-invalid');
 
     // remove valid feedback
-    let nextSibling: Element | null;
-    while ((nextSibling = element.nextElementSibling) && nextSibling?.classList?.contains('valid-feedback')) {
-      nextSibling.remove();
+    let element: Element = controlElement;
+    let sibling = element.nextElementSibling;
+
+    while (sibling !== null) {
+      if (sibling.classList.contains('valid-feedback')) {
+        sibling.remove();
+      } else {
+        element = sibling;
+      }
+
+      sibling = element.nextElementSibling;
     }
 
     // get errors from control
@@ -109,7 +125,7 @@ export class ValidationFeedbackDirective implements DoCheck {
       feedback.classList.add('invalid-feedback');
 
       // insert element after input
-      element.insertAdjacentElement('afterend', feedback);
+      controlElement.insertAdjacentElement('afterend', feedback);
     }
   }
 }

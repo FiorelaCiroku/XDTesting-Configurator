@@ -43,6 +43,10 @@ export class UploadOntologyComponent {
    * Creates a new ontology in `UserInput.json` and, if provided, uploads ontology `.owl` file
    */
   upload(): void {
+    this.errorMsg = undefined;
+    this.successMsg = undefined;
+    this.showAlert = false;
+
     // check form group validity and, possibly, mark fields as touched and dirty
     if (!this.formGroup.valid) {
       this.formGroup.markAllAsTouched();
@@ -66,9 +70,7 @@ export class UploadOntologyComponent {
 
     const $sub = this.apiService.uploadOntology(fgValue)
       .pipe(tap((res) => {
-        this.successMsg = undefined;
-        this.errorMsg = undefined;
-
+        console.log(res);
         if (res.success) {
           this.successMsg = 'Ontology uploaded successfully';
         } else {

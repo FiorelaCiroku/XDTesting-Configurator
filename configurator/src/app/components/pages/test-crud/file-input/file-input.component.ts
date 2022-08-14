@@ -35,12 +35,12 @@ export class FileInputComponent {
       return false;
     }
 
-    return this.selectedNewFile && (
+    return Boolean(this.selectedNewFile && (
       fg.controls.file.value?.length || (
         fg.controls.fileName.value &&
         fg.controls.fileName.value !== this.currentFile
       )
-    );
+    ));
   }
 
   /**

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TypedFormControl, TypedFormGroup } from '../../../utils/typed-form';
 import { ApiResult, Fragment, FragmentForm, Ontology } from '../../../models';
 import { ApiService } from '../../../services';
-import { catchError, Observable, of, switchMap } from 'rxjs';
+import { catchError, Observable, of, switchMap, throwError } from 'rxjs';
 import { Summary } from '../../shared/summary/summary.component';
 import { markAllAsDirty, toggleDisableControls } from 'src/app/utils';
 
@@ -67,6 +67,10 @@ export class CreateFragmentComponent {
     // upload fragment file first
     const $sub = this._apiService.uploadFragmentFile(data?.file?.[0], fragment)
       .pipe(switchMap((res) => {
+        if (!res.success) {
+          return throwError(() => res.message);
+        }
+
         // set just uploaded file name
         fragment.fileName = `${fragment.ontologyName}/${fragment.name}/${res.data}`;
 
@@ -81,15 +85,18 @@ export class CreateFragmentComponent {
         this.errorMsg = result.message;
         this.showAlert = true;
 
-        this.summary = [{
-          label: 'Ontology Name',
-          data: data?.ontologyName || '',
-        }, {
-          label: 'Ontology fragment Name',
-          data: data?.name || ''
-        }];
+        if (result.success) {
+          this.summary = [{
+            label: 'Ontology Name',
+            data: data?.ontologyName || '',
+          }, {
+            label: 'Ontology fragment Name',
+            data: data?.name || ''
+          }];
+        }
 
-        $sub.unsubscribe();
+        toggleDisableControls(this.formGroup);
+        setTimeout(() => { $sub.unsubscribe(); });
       });
 
   }

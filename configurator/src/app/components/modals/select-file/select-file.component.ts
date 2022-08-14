@@ -22,8 +22,8 @@ export class SelectFileComponent implements OnInit {
     // get modal data
     // data only available from this point on
     // see https://www.primefaces.org/primeng/dynamicdialog
-    const fragment: Fragment = this._config.data.fragment;
-    const type: FileTypes = this._config.data.fileType;
+    const fragment: Fragment = this._config.data?.fragment;
+    const type: FileTypes = this._config.data?.fileType;
 
     if (!fragment || !type) {
       return;
@@ -62,7 +62,10 @@ export class SelectFileComponent implements OnInit {
         });
 
         this.loading = false;
-        $sub.unsubscribe();
+
+        setTimeout(() => {
+          $sub.unsubscribe();
+        });
       });
   }
 
