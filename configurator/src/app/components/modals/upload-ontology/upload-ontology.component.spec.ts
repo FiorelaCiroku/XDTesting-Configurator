@@ -140,7 +140,7 @@ describe('UploadOntologyComponent', () => {
     component.onToggle();
 
     expect(fg.controls.name.value).toEqual('Some ontology');
-    expect(fg.controls.file.value).not.toBeDefined();
-    expect(fg.controls.url.value).not.toBeDefined();
+    expect(fg.controls.file!.value).not.toBeDefined();
+    expect(fg.controls.url!.value).not.toBeDefined();
   });
 });

@@ -8,6 +8,6 @@ export interface Ontology {
 
 export interface OntologyForm {
   name: string;
-  url: string;
-  file: FileList;
+  url?: string;
+  file?: FileList;
 }

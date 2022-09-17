@@ -172,9 +172,9 @@ export class ApiService {
    * @returns `Observable` of list of files
    */
   listTestFiles(fragment?: Fragment, type?: FileTypes): Observable<ContentFile[]> {
-    // fragment is required but declared as optional in method's signature for convenience
+  // fragment is required but declared as optional in method's signature for convenience
     if (!fragment) {
-      return throwError(() => 'Empty fragment name');
+      return throwError(() => 'Empty fragment');
     }
 
     // build relative base URL
@@ -191,11 +191,6 @@ export class ApiService {
         .filter(u => !!u);
     }
 
-    if (!urls.length) {
-      // if there is no URLs in array, throw an error
-      // Should fall in this case if FILE_TYPES is an empty object
-      return throwError(() => 'Error retrieving files');
-    }
 
     // execute all requests in parallel and return an array containing all the results of the API calls
     return forkJoin(urls.map(url => this.listFiles(url)))
@@ -364,7 +359,7 @@ export class ApiService {
 
           // if test is not found, index is undefined
           if (index === undefined) {
-            return throwError(() => 'Test id not found');
+            return throwError(() => new HttpErrorResponse({ error: 'Test id not found' }));
           }
 
           // get and update the old test
@@ -433,17 +428,15 @@ export class ApiService {
 
         // Body required by Git APIs to upload / update a file
         const body: CreateOrUpdateFile = {
-          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''), // Commit message
+          message: `Uploaded file ${name} for fragment ${fragment.name}`, // Commit message
           content: encode(fileContent), // base64 encoding of the content
         };
 
         // URL where to upload file
-        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/` +
-          (fragment ? `${fragment.ontologyName}/${fragment.name}` : '') + '/' + name
-        );
+        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/${fragment.ontologyName}/${fragment.name}/${name}`);
 
         if (!url) {
-          return throwError(() => 'Could not get url. Missing repository or branch');
+          return throwError(() => new HttpErrorResponse({ error: 'Could not get url. Missing repository or branch' }));
         }
 
         // API call to update the file
@@ -456,7 +449,7 @@ export class ApiService {
 
       // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
-        return of({success: false, message: err.message});
+        return of({success: false, message: err.error});
       }));
   }
 
@@ -472,6 +465,11 @@ export class ApiService {
     if (!dataFile) {
       // if dataFile is not provided just return a successful response
       return of({success: true});
+    }
+
+
+    if (!fragment) {
+      return throwError(() => 'Fragment not provided');
     }
 
     // get file name
@@ -502,21 +500,17 @@ export class ApiService {
 
         // Body required by Git APIs to upload / update a file
         const body: CreateOrUpdateFile = {
-          message: `Uploaded file ${name}` + (fragment ? ` for fragment ${fragment.name}` : ''), // Commit message
+          message: `Uploaded file ${name} for fragment ${fragment.name}`, // Commit message
           content: encode(fileContent), // base64 encoding of the content
         };
 
         const subfolder = type ? FILE_TYPES[type].folder : null;
 
         // URL where to upload file
-        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/` +
-          (fragment ? `${fragment.ontologyName}/${fragment.name}` : '') +
-          '/' +
-          (subfolder ? `${subfolder}/${name}` : name)
-        );
+        const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/${fragment.ontologyName}/${fragment.name}/` +(subfolder ? `${subfolder}/${name}` : name));
 
         if (!url) {
-          return EMPTY;
+          return throwError(() => new HttpErrorResponse({ error: 'Could not get url. Missing repository or branch' }));
         }
         // API call to update the file
         return this._http.put(url, body);
@@ -528,7 +522,7 @@ export class ApiService {
 
       // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
-        return of({success: false, message: err.message});
+        return of({success: false, message: err.error});
       }));
   }
 
@@ -544,7 +538,7 @@ export class ApiService {
       .pipe(switchMap(fragments => {
         // filter out the one with the same name and ontology name
         // NOTE: fragment.name and fragment.ontologyName should be unique
-        fragments = fragments.filter(f => f.name !== fragment.name && f.ontologyName !== fragment.ontologyName);
+        fragments = fragments.filter(f => f.name !== fragment.name || f.ontologyName !== fragment.ontologyName);
 
         // update fragments
         return this._updateFragments(fragments, `Removed fragment ${fragment.name}`, this.userInputSha);
@@ -556,7 +550,7 @@ export class ApiService {
 
       // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
-        return of({success: false, message: err.message});
+        return of({success: false, message: err.error});
       }));
   }
 
@@ -594,7 +588,7 @@ export class ApiService {
       .pipe(catchError((err: HttpErrorResponse): Observable<ApiResult> => {
         return of({
           success: false,
-          message: err.message
+          message: err.error
         });
       }));
   }
@@ -676,8 +670,8 @@ export class ApiService {
           const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
 
           // if duplicated ontology, throw an error
-          if (alreadyDefined?.length) {
-            return throwError(() => `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`);
+          if (alreadyDefined.length) {
+            return throwError(() => new HttpErrorResponse({ error: `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`}));
           }
 
           // filter over files and check if there's at least another file with the same name
@@ -711,7 +705,7 @@ export class ApiService {
           const url = ApiService.getUrl(`/repos/{repo}/contents/${this.baseDir}/${ontology.name}/${name}`);
 
           if (!url) {
-            return throwError(() => 'Repository or branch not selected');
+            return throwError(() => new HttpErrorResponse({ error: 'Repository or branch not selected'}));
           }
 
           // upload file
@@ -736,8 +730,8 @@ export class ApiService {
           // check if there's another ontology with the same name and, if so, throw an error
           const alreadyDefined = ontologies.filter(o => o.name === ontology.name);
 
-          if (alreadyDefined?.length) {
-            return throwError(() => `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`);
+          if (alreadyDefined.length) {
+            return throwError(() => new HttpErrorResponse({ error: `Duplicated ontology: an ontology with name "${ontology.name}" is already defined`}));
           }
 
           // build ApiResult with ontology URL in data property
@@ -750,10 +744,11 @@ export class ApiService {
       // here it has already been checked if the ontology already exists so no need to check again
       const ontologies = this.userInput?.ontologies || [];
 
-      // if URL is not present, something has errored and it has not been detected
-      if (!apiResult.data) {
-        return throwError(() => 'Application error during save. URL not defined');
-      }
+      // section commented because the code can't be hit as highlighted by unit tests
+      // // if URL is not present, something has errored and it has not been detected
+      // if (!apiResult.data) {
+      //   return throwError(() => new HttpErrorResponse({ error: 'Application error during save. URL not defined' }));
+      // }
 
       // push the new ontology in ontologies list
       ontologies.push({
@@ -782,7 +777,7 @@ export class ApiService {
 
 
       // if any error occurs, build ApiResult with the error in it
-      .pipe(catchError((err): Observable<ApiResult> => of({success: false, message: err })));
+      .pipe(catchError((err: HttpErrorResponse): Observable<ApiResult> => of({success: false, message: err.error })));
   }
 
 
@@ -818,7 +813,7 @@ export class ApiService {
 
       // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
-        return of({success: false, message: err.message});
+        return of({ success: false, message: err.error });
       }));
   }
 
@@ -867,7 +862,7 @@ export class ApiService {
 
       // if any error occurs, build ApiResult with the error in it
       .pipe(catchError((err: HttpErrorResponse) => {
-        return of({success: false, message: err.message});
+        return of({success: false, message: err.error});
       }));
   }
 

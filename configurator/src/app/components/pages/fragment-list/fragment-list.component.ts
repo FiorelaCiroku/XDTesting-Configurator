@@ -47,7 +47,7 @@ export class FragmentListComponent {
    * @param e Search event
    */
   filterContent(e: Event): void {
-    const input = e?.target as HTMLInputElement;
+    const input = e.target as HTMLInputElement;
 
     if (!input) {
       return;
