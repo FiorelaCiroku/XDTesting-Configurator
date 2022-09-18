@@ -36,7 +36,7 @@ jobs:
         run: |
           cd configurator
           npm test -- --no-watch --no-progress --browsers=ChromeHeadlessCI --code-coverage
-        
+
       # Create report
       - name: Generate Report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -44,7 +44,7 @@ jobs:
           filename: configurator/coverage/ng-test/cobertura-coverage.xml
           format: markdown
           output: file
-          
+
       # Output job summary. See https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
       - name: Output Summary
         run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
@@ -62,8 +62,11 @@ jobs:
           sudo apt install git unzip libzip-dev php8.1 php8.1-zip php8.1-mbstring php8.1-xdebug -y
 
       - name: Install Composer
-        run: cd server && ./install-composer.sh
-          
+        run: |
+          cd server
+          sudo chmod 0775 ./install-composer.sh
+          sudo ./install-composer.sh
+
       - name: Install dependencies
         run: cd server && php composer.phar install
 
@@ -76,7 +79,7 @@ jobs:
           filename: server/coverage/cobertura.xml
           format: markdown
           output: file
-          
+
       # Output job summary. See https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
       - name: Output Summary
         run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
