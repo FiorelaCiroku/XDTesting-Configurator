@@ -27,11 +27,11 @@
       <th>
         <div class="d-flex justify-content-start align-items-center">
           Type
-          <p-columnFilter class="ms-2" field="status" matchMode="in" display="menu" [showMatchModes]="false"
+          <p-columnFilter class="ms-2" field="type" matchMode="in" display="menu" [showMatchModes]="false"
                           [showOperator]="false" [showAddButton]="false">
             <ng-template pTemplate="filter" let-value let-filter="filterCallback">
               <div class="d-flex align-items-center mb-1" *ngFor="let option of fileTypeSpecs | keyvalue">
-                <p-checkbox name="status" [ngModel]="value"  [value]="option.key" [inputId]="option.key"
+                <p-checkbox name="type" [ngModel]="value"  [value]="option.key" [inputId]="option.key"
                             (onChange)="filter($event.checked)"></p-checkbox>
                 <label class="ms-2" for="{{option.key}}">
                   {{ option.value.label }}
