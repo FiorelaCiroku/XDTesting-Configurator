@@ -74,7 +74,6 @@ export class FilesTableComponent implements OnChanges {
 
   /**
    * Clear table's filters
-   * @param table Table reference to clear
    */
   clear(): void {
     this.table?.clear();

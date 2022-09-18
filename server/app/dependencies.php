@@ -8,6 +8,8 @@ use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
@@ -25,5 +27,10 @@ return function (ContainerBuilder $containerBuilder) {
 
             return $logger;
         },
+
+        HttpClientInterface::class => HttpClient::create(),
+
+        // php allows calling function by name
+        'setcookie' => 'setcookie'
     ]);
 };

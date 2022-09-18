@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  test:
+  FrontendTest:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -48,4 +48,58 @@ jobs:
       # Output job summary. See https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
       - name: Output Summary
         run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
-        
+
+  BackendTest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install PHP 8
+        run: |
+          sudo apt update
+          sudo apt install software-properties-common -y
+          sudo add-apt-repository ppa:ondrej/php -y
+          sudo apt install git unzip php8.1 php8.1-zip php8.1-mbstring php8.1-xdebug -y
+
+      - name: Install Composer
+        run: |
+          cd server
+          cat <<EOF > install-composer.sh
+          #!/bin/sh
+
+          EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
+          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+          ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+          if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]
+          then
+              >&2 echo 'ERROR: Invalid installer checksum'
+              rm composer-setup.php
+              exit 1
+          fi
+
+          php composer-setup.php --quiet
+          RESULT=$?
+          rm composer-setup.php
+          exit $RESULT
+          EOF
+
+          sudo chmod 0775 ./install-composer.sh
+          ./install-composer.sh
+          
+      - name: Install dependencies
+        run: cd server && php composer.phar install
+
+      - name: Run tests
+        run: cd server && XDEBUG_MODE=coverage php composer.phar test
+
+      - name: Generate Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: server/coverage/cobertura.xml
+          format: markdown
+          output: file
+          
+      # Output job summary. See https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+      - name: Output Summary
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY

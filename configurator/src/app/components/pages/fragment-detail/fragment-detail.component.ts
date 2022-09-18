@@ -70,7 +70,6 @@ export class FragmentDetailComponent {
 
   /**
    * Clears table's filters
-   * @param table table on which to operate
    */
   clear(): void {
     this.table?.clear();

@@ -1,8 +1,25 @@
-.idea/
-.vscode/
-/coverage/
-/vendor/
+# PhpStorm
+.idea
+
+# Visual Studio Code
+.vscode
+
+# Composer
+vendor
+composer.phar
+
+# Logs
 /logs/*
 !/logs/README.md
-.phpunit.result.cache
+
+# Local secrets
 .env
+
+# PHP-CS-Fixer
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+
+# PHPUnit
+/coverage/
+/.phpunit.cache
+.phpunit.result.cache

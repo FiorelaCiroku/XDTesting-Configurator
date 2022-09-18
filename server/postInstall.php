@@ -2,6 +2,11 @@
 
 
 $envFile = '.env';
+
+if (file_exists(($envFile))) {
+    return;
+}
+
 copy('.env.example', $envFile);
 $env = file_get_contents($envFile);
 
