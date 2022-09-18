@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationService } from './services';
 import {
   CreateFragmentComponent,
-  TestCrudComponent, FragmentDetailComponent,
+  FragmentDetailComponent,
   FragmentListComponent,
   LoginComponent
 } from './components/pages';
@@ -14,6 +14,7 @@ import { OntologyDocsComponent } from './components/pages/docs/ontology-docs.com
 import { FragmentDocsComponent } from './components/pages/docs/fragment-docs.component';
 import { TestDocsComponent } from './components/pages/docs/test-docs.component';
 import { DashboardComponent } from './components/pages/dashboard/dashboard.component';
+import { TestCrudComponent } from './components/pages/test-crud';
 
 const routes: Routes = [
   {
