@@ -84,7 +84,6 @@ class LoginCallbackTest extends TestCase
                     $this->assertTrue($options['secure']);
                     $this->assertTrue($options['httponly']);
                     $this->assertEquals('Strict', $options['samesite']);
-                    $this->assertEquals('third-level.domain.com', $options['domain']);
 
                     [$iv, $token] = explode('.', base64_decode($value));
                     $token = openssl_decrypt(
@@ -107,7 +106,6 @@ class LoginCallbackTest extends TestCase
         $request = $this->createRequest(
             'GET',
             "$_ENV[ROUTES_PREFIX]/login-callback",
-            host: 'third-level.domain.com',
             query: "code=$callbackCode"
         );
 
@@ -137,7 +135,6 @@ class LoginCallbackTest extends TestCase
                         $this->assertTrue($options['httponly']);
                         $this->assertNotContains('secure', $options_keys);
                         $this->assertNotContains('samesite', $options_keys);
-                        $this->assertNotContains('domain', $options_keys);
 
                         [$iv, $token] = explode('.', base64_decode($value));
                         $token = openssl_decrypt(
@@ -161,7 +158,6 @@ class LoginCallbackTest extends TestCase
         $request = $this->createRequest(
             'GET',
             "$_ENV[ROUTES_PREFIX]/login-callback",
-            host: 'third-level.domain.com',
             query: "code=$callbackCode"
         );
 

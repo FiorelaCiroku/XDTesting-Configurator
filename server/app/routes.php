@@ -93,7 +93,6 @@ return function (App $app) {
         if (!isset($_ENV['ENV']) || ($_ENV['ENV'] !== 'development' && $_ENV['ENV'] !== 'dev')) {
             $cookieSettings['secure'] = true;
             $cookieSettings['samesite'] = 'Strict';
-            $cookieSettings['domain'] = $request->getUri()->getHost();
         }
 
         // needed for tests
