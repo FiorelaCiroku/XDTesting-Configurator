@@ -57,6 +57,46 @@ class ProxyTest extends TestCase
         $this->sendRequest("/some-route", reqHeaders: ['If-None-Match' => 'etag']);
     }
 
+    public function testShouldReturnErrorOnTryingToWriteInOtherDirectory()
+    {
+        $app = $this->getAppInstance(diDefinitions: [
+            HttpClientInterface::class => new MockHttpClient(new MockResponse())
+        ]);
+
+        $encryptedToken = $this->encryptToken();
+        $request = $this->createRequest(
+            'PUT',
+            '/user/repo/contents/some-dir',
+            cookies: ['GITHUB_TOKEN' => $encryptedToken]
+        );
+
+        $response = $app->handle($request);
+
+        $this->assertEquals(405, $response->getStatusCode());
+        $this->assertEquals(
+            '{"error":"You can only read from specified directory"}',
+            $this->getResponseBody($response)
+        );
+    }
+
+    public function testShouldReturnNotErrorOnTryingToWriteInXdTestingDirectory()
+    {
+        $app = $this->getAppInstance(diDefinitions: [
+            HttpClientInterface::class => new MockHttpClient(new MockResponse('{}'))
+        ]);
+
+        $encryptedToken = $this->encryptToken();
+        $request = $this->createRequest(
+            'PUT',
+            '/user/repo/contents/.xd-testing',
+            cookies: ['GITHUB_TOKEN' => $encryptedToken]
+        );
+
+        $response = $app->handle($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
 
     private function sendRequest(string $url, MockResponse $mockResponse = null, array $reqHeaders = []): ResponseInterface
     {
@@ -79,7 +119,7 @@ class ProxyTest extends TestCase
         }
 
         $path = preg_replace('/^' . preg_quote($_ENV['ROUTES_PREFIX'], '/') . '\/?/', '', $url);
-        $path = str_starts_with($path , '/') ? substr($path, 1) : $path;
+        $path = str_starts_with($path, '/') ? substr($path, 1) : $path;
         $url = 'https://api.github.com/' . $path;
 
         $this->assertEquals($mockResponse->getStatusCode(), $response->getStatusCode());
@@ -103,6 +143,4 @@ class ProxyTest extends TestCase
         $token = openssl_encrypt($token, 'aes-256-cbc', $_ENV['AES_SECRET'], iv: $iv);
         return base64_encode(base64_encode($iv) . '.' . base64_encode($token));
     }
-
-
 }

@@ -7,6 +7,8 @@ RUN apt update && \
     pecl install zip && \
     docker-php-ext-enable zip && \
     cd /var/www/html/ && \
+    chown $USER: ./install-composer.sh && \
+    chmod u+rx ./install-composer.sh && \
     ./install-composer.sh && \
     php ./composer.phar install --no-dev && \
     a2enmod rewrite

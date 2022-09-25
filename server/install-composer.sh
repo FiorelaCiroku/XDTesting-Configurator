@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # see https://getcomposer.org/doc/faqs/how-to-install-composer-programmatically.md
 COMPOSER_INSTALL_PATH="${COMPOSER_INSTALL_PATH:-$(pwd)}"

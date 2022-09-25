@@ -86,10 +86,20 @@ return function (App $app) {
         $token = openssl_encrypt($token, 'aes-256-cbc', $_ENV['AES_SECRET'], iv: $iv);
         $token = base64_encode(base64_encode($iv) . '.' . base64_encode($token));
 
+        $cookieSettings = [
+            'httponly' => true,
+        ];
+
+        if (!isset($_ENV['ENV']) || ($_ENV['ENV'] !== 'development' && $_ENV['ENV'] !== 'dev')) {
+            $cookieSettings['secure'] = true;
+            $cookieSettings['samesite'] = 'Strict';
+            $cookieSettings['domain'] = $request->getUri()->getHost();
+        }
+
         // needed for tests
         /** @noinspection MissingService */
         $setcookie = $app->getContainer()->get('setcookie');
-        $setcookie('GITHUB_TOKEN', $token, httponly: true);
+        $setcookie('GITHUB_TOKEN', $token, $cookieSettings);
 
         return $response->withStatus(200);
     });
@@ -123,6 +133,7 @@ return function (App $app) {
         $token = 'gho_' . substr($token, 31, -61);
 
 
+        $method = $request->getMethod();
         $path = $request->getUri()->getPath();
         $prefix = $_ENV['ROUTES_PREFIX'];
 
@@ -134,6 +145,14 @@ return function (App $app) {
 
         if (str_starts_with($path, '/')) {
             $path = substr($path, 1);
+        }
+
+        if (strtolower($method) === 'put' && !str_contains($path, 'contents/.xd-testing')) {
+            $response->getBody()->write(json_encode([
+                'error' => 'You can only read from specified directory'
+            ]));
+
+            return $response->withStatus(405);
         }
 
         $qs = $request->getUri()->getQuery();

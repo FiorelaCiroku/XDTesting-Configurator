@@ -72,16 +72,24 @@ class TestCase extends PHPUnit_TestCase
     }
 
     /**
-     * @param string $method
-     * @param string $path
-     * @param array  $headers
-     * @param array  $cookies
-     * @param array  $serverParams
+     * @param string   $method
+     * @param string   $path
+     * @param string   $scheme
+     * @param string   $host
+     * @param int|null $port
+     * @param string   $query
+     * @param array    $headers
+     * @param array    $cookies
+     * @param array    $serverParams
      * @return Request
      */
-    protected function createRequest(string $method, string $path, string $query = '', array $headers = ['HTTP_ACCEPT' => 'application/json'], array $cookies = [], array $serverParams = []): Request
+    protected function createRequest(
+        string $method, string $path, string $scheme = 'http', string $host = 'example.com', int $port = null,
+        string $query = '', array $headers = ['HTTP_ACCEPT' => 'application/json'], array $cookies = [],
+        array $serverParams = []
+    ): Request
     {
-        $uri = new Uri('', '', 80, $path, $query);
+        $uri = new Uri($scheme, $host, $port, $path, $query);
         $handle = fopen('php://temp', 'w+');
         $stream = (new StreamFactory())->createStreamFromResource($handle);
 

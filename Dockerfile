@@ -14,6 +14,8 @@ RUN apt update -y && \
     pecl install zip && \
     docker-php-ext-enable zip && \
     cd /root/project && \
+    chown $USER: ./install-composer.sh && \
+    chmod u+rx ./install-composer.sh && \
     ./install-composer.sh && \
     php composer.phar install && \
     rm composer.phar
