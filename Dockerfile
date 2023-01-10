@@ -25,7 +25,7 @@ RUN apt update -y && \
 FROM php:8.1.3-apache AS final_image
 RUN a2enmod rewrite
 COPY --from=FE /root/project/dist/configurator/* /var/www/html/
-COPY --from=BE /root/project /var/www/html/api
+COPY --from=BE /root/project /var/www/html/api/
 COPY frontend.htaccess /var/www/html/.htaccess
 
 # RUN apt update -y && \
