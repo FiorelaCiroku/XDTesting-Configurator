@@ -103,7 +103,7 @@ export class ApiService {
   listRepos(): Observable<Repository[]> {
     const headers = ApiService.getDefaultHeaders(this.repositoriesEtag);
 
-    return this._http.get<Repository[]>(`${baseUrl}/user/repos?type=all`, {observe: 'response', headers})
+    return this._http.get<Repository[]>(`${baseUrl}/user/repos?type=all&per_page=100`, { observe: 'response', headers })
       .pipe(map(res => {
         // per https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api#conditional-requests
         // save ETag and list of repositories

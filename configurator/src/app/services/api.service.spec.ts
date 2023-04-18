@@ -70,7 +70,7 @@ describe('ApiService', () => {
 
       if (eTag) {
         expect(httpClientMock.get).toHaveBeenCalledWith(
-          `${baseUrl}/user/repos?type=all`,
+          `${baseUrl}/user/repos?type=all&per_page=100`,
           jasmine.objectContaining({ observe: 'response', headers: eTag ? { 'If-None-Match': eTag } : {} })
         );
       }
